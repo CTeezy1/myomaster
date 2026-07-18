@@ -1,8 +1,8 @@
 Muscle,Origin,Insertion,Action,Innervation
-Longus colli,C1-T3 vertebral bodies,C1-C6 vertebrae,Cervical flexion/stability,Anterior rami of spinal nerves C2-C6
+Longus colli,C3-T1 Vertebrae,C1-C6 vertebrae,Cervical flexion/stability,Anterior rami of spinal nerves C2-C6
 Longus capitis,C3-C6 transverse processes,Basilar occiput,Head/neck flexion,Anterior rami of spinal nerves C1-C3
-Sternocleidomastoid,"Manubrium, clavicle",Mastoid process,"Flexion (bilateral) , contra rotation and ipsi sidebend (unilateral) ",Spinal accessory (CN XI)
-Scalenes,C2-C7 transverse processes,Ribs 1-2,"Lateral flexion (unilateral) flexion (bilateral) , rib 1-2 elevation ",Anterior rami of spinal nerves C3-C8
-Levator scapulae,C1-C4 transverse processes,Superior medial scapula,"Extension (bilateral) , sidebend (ipsilateral)",Anterior rami C3-C4 and dorsal scapular nerve (c5)
-Suboccipitals,C1-C2/occiput,Occiput/C1-C2,"Head extension, ipsilateral rotation ",Suboccipital nerve C1
-Semispinalis capitis,C4-T6 transverse/articular processes,Occiput,"Head extension (bilateral) , contralateral rotation/SB (unilateral)",Greater Occipital nerve C2 and C3 spinal nerve
+Sternocleidomastoid,"Manubrium of sternum, medial clavicle",Mastoid process,"Flexion (bilateral) , contra rotation and ipsi sidebend (unilateral) ",Spinal accessory (CN XI)
+Scalenes,C2-C7 transverse processes,Ribs 1-2,"ipsi sidebending (unilateral)  , rib 1-2 elevation ",Anterior rami of spinal nerves C3-C8
+Levator scapulae,C1-C4 transverse processes,Superior medial scapula,cervical sidebend (ipsilateral); scapular evelation and downward rotation,Anterior rami C3-C4 and dorsal scapular nerve (c5)
+Suboccipitals,C1-C2,Occiput and C1,"Head extension, ipsilateral rotation ",Suboccipital nerve C1
+Semispinalis capitis,C4-T6 transverse/articular processes,Occiput,"Head extension (bilateral) , contralateral rotation/ ipsilateral sidebend (unilateral)",Greater Occipital nerve C2 and C3 spinal nerve

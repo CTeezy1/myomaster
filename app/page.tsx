@@ -1,9 +1,33 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CourseComplete } from "@/app/components/CourseComplete";
+import { Dashboard } from "@/app/components/Dashboard";
+import { MuscleBrief } from "@/app/components/MuscleBrief";
+import {
+  StudySession,
+  type FeedbackGrade,
+} from "@/app/components/StudySession";
+import { PageShell } from "@/app/components/ui/PageShell";
+import { useMuscleBriefProgress } from "@/src/hooks/useMuscleBriefProgress";
+import { DEFAULT_COURSE_ID } from "@/src/config/study-flow";
 import { cards } from "@/src/data/cards";
+import type { MuscleProfile } from "@/src/data/muscle-profile.types";
+import type { Course } from "@/src/lib/course.types";
+import {
+  getCourseById,
+  getCourseProfileAtIndex,
+  getCourseProfiles,
+  getProfileForStudyCard,
+  hasNextMuscle,
+} from "@/src/lib/course-controller";
+import {
+  getCardsForMuscleProfile,
+  getModuleDisplayName,
+} from "@/src/lib/study-session";
 
-type Screen = "dashboard" | "study" | "complete";
+type Screen = "dashboard" | "brief" | "brief-review" | "study" | "course-complete";
 
 type StudyCard = (typeof cards)[number];
 
@@ -25,33 +49,116 @@ function updateMastery(
 }
 
 export default function Home() {
+  const router = useRouter();
+  const { hasViewed, markViewed, resetProgress } = useMuscleBriefProgress();
   const [screen, setScreen] = useState<Screen>("dashboard");
+  const [activeCourse, setActiveCourse] = useState<Course | null>(null);
+  const [currentMuscleIndex, setCurrentMuscleIndex] = useState(0);
   const [studyCards, setStudyCards] = useState<StudyCard[]>(() =>
     cards.map((card) => ({ ...card })),
   );
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [answerShown, setAnswerShown] = useState(false);
+  const [feedbackGrade, setFeedbackGrade] = useState<FeedbackGrade | null>(
+    null,
+  );
+  const [reviewProfile, setReviewProfile] = useState<MuscleProfile | null>(
+    null,
+  );
   const [correctCount, setCorrectCount] = useState(0);
   const [partialCount, setPartialCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
 
-  const currentCard = studyCards[currentCardIndex];
+  const selectedProfile = activeCourse
+    ? getCourseProfileAtIndex(activeCourse, currentMuscleIndex)
+    : undefined;
+  const sessionCards = selectedProfile
+    ? getCardsForMuscleProfile(studyCards, selectedProfile)
+    : [];
+  const currentCard = sessionCards[currentCardIndex];
   const estimatedMinutes = getEstimatedMinutes(studyCards.length);
 
-  function resetSession() {
+  function resetMuscleSession() {
     setCurrentCardIndex(0);
     setAnswerShown(false);
+    setFeedbackGrade(null);
+    setReviewProfile(null);
     setCorrectCount(0);
     setPartialCount(0);
     setIncorrectCount(0);
   }
 
+  function resetCourse() {
+    setActiveCourse(null);
+    setCurrentMuscleIndex(0);
+    resetMuscleSession();
+  }
+
+  function beginMuscle(profile: MuscleProfile) {
+    resetMuscleSession();
+
+    if (hasViewed(profile.id)) {
+      setScreen("study");
+      return;
+    }
+
+    setScreen("brief");
+  }
+
   function handleStartStudying() {
-    resetSession();
+    const course = getCourseById(DEFAULT_COURSE_ID);
+
+    if (!course) return;
+
+    const firstProfile = getCourseProfileAtIndex(course, 0);
+
+    if (!firstProfile) return;
+
+    setActiveCourse(course);
+    setCurrentMuscleIndex(0);
+    beginMuscle(firstProfile);
+  }
+
+  function handleStartPractice() {
+    if (selectedProfile) {
+      markViewed(selectedProfile.id);
+    }
+
+    resetMuscleSession();
     setScreen("study");
   }
 
-  function handleGrade(type: "correct" | "partial" | "incorrect") {
+  function advanceToNextCard() {
+    setAnswerShown(false);
+    setFeedbackGrade(null);
+
+    const nextIndex = currentCardIndex + 1;
+    setCurrentCardIndex(nextIndex);
+
+    if (nextIndex >= sessionCards.length) {
+      advanceCourseAfterMuscle();
+    }
+  }
+
+  function advanceCourseAfterMuscle() {
+    if (!activeCourse) return;
+
+    if (hasNextMuscle(activeCourse, currentMuscleIndex)) {
+      const nextIndex = currentMuscleIndex + 1;
+      const nextProfile = getCourseProfileAtIndex(activeCourse, nextIndex);
+
+      if (!nextProfile) return;
+
+      setCurrentMuscleIndex(nextIndex);
+      beginMuscle(nextProfile);
+      return;
+    }
+
+    resetMuscleSession();
+    setScreen("course-complete");
+  }
+
+  function applyGrade(type: "correct" | "partial" | "incorrect") {
     if (!currentCard) return;
 
     if (type === "correct") setCorrectCount((count) => count + 1);
@@ -67,177 +174,100 @@ export default function Home() {
           : card,
       ),
     );
-
-    setAnswerShown(false);
-
-    const nextIndex = currentCardIndex + 1;
-    setCurrentCardIndex(nextIndex);
-
-    if (nextIndex >= studyCards.length) {
-      setScreen("complete");
-    }
   }
 
-  function handleStudyAgain() {
-    resetSession();
+  function handleGrade(type: "correct" | "partial" | "incorrect") {
+    if (!currentCard || feedbackGrade !== null) return;
+
+    applyGrade(type);
+
+    if (type === "correct") {
+      advanceToNextCard();
+      return;
+    }
+
+    setFeedbackGrade(type);
+  }
+
+  function handleContinueAfterFeedback() {
+    if (!feedbackGrade) return;
+
+    advanceToNextCard();
+  }
+
+  function handleReviewBrief() {
+    if (!currentCard || !feedbackGrade) return;
+
+    const profile = getProfileForStudyCard(currentCard, activeCourse);
+
+    if (!profile) return;
+
+    setReviewProfile(profile);
+    setScreen("brief-review");
+  }
+
+  function handleReturnToPractice() {
+    setReviewProfile(null);
     setScreen("study");
   }
 
   function handleReturnToDashboard() {
+    resetCourse();
     setScreen("dashboard");
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-          MyoMaster
-        </h1>
+    <PageShell>
+      {screen === "dashboard" && (
+        <Dashboard
+          cardCount={studyCards.length}
+          estimatedMinutes={estimatedMinutes}
+          onStartStudying={handleStartStudying}
+          onOpenMuscleLibrary={() => router.push("/library")}
+          onResetLearningProgress={resetProgress}
+        />
+      )}
 
-        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          {screen === "dashboard" && (
-            <div>
-              <p className="text-lg text-slate-700">Welcome, Student!</p>
+      {screen === "brief" && selectedProfile && (
+        <MuscleBrief
+          profile={selectedProfile}
+          mode="course"
+          onPrimaryAction={handleStartPractice}
+        />
+      )}
 
-              <h2 className="mt-8 text-xl font-semibold text-slate-900">
-                Today&apos;s Study Session
-              </h2>
+      {screen === "brief-review" && reviewProfile && (
+        <MuscleBrief
+          profile={reviewProfile}
+          mode="review"
+          onPrimaryAction={handleReturnToPractice}
+        />
+      )}
 
-              <div className="mt-6 space-y-3 text-left text-base text-slate-700">
-                <p>
-                  New Cards:{" "}
-                  <span className="font-medium text-slate-900">
-                    {studyCards.length}
-                  </span>
-                </p>
-                <p>
-                  Review Cards:{" "}
-                  <span className="font-medium text-slate-900">0</span>
-                </p>
-                <p>
-                  Estimated Time:{" "}
-                  <span className="font-medium text-slate-900">
-                    {estimatedMinutes} {estimatedMinutes === 1 ? "minute" : "minutes"}
-                  </span>
-                </p>
-              </div>
+      {screen === "study" && selectedProfile && currentCard && (
+        <StudySession
+          moduleName={getModuleDisplayName(selectedProfile.region)}
+          currentIndex={currentCardIndex}
+          totalCards={sessionCards.length}
+          muscle={currentCard.muscle}
+          question={getQuestion(currentCard.category)}
+          answer={currentCard.answer}
+          answerShown={answerShown}
+          feedbackGrade={feedbackGrade}
+          onShowAnswer={() => setAnswerShown(true)}
+          onGrade={handleGrade}
+          onReviewBrief={handleReviewBrief}
+          onContinue={handleContinueAfterFeedback}
+        />
+      )}
 
-              <button
-                type="button"
-                onClick={handleStartStudying}
-                className="mt-8 w-full rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-              >
-                Start Studying
-              </button>
-            </div>
-          )}
-
-          {screen === "study" && currentCard && (
-            <>
-              <p className="text-sm font-medium text-slate-500">
-                Question {currentCardIndex + 1} of {studyCards.length}
-              </p>
-
-              <p className="mt-6 text-sm font-medium uppercase tracking-wider text-slate-500">
-                Muscle
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-                {currentCard.muscle}
-              </h2>
-
-              <p className="mt-8 text-lg text-slate-700">
-                {getQuestion(currentCard.category)}
-              </p>
-
-              {!answerShown ? (
-                <button
-                  type="button"
-                  onClick={() => setAnswerShown(true)}
-                  className="mt-8 w-full rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-                >
-                  Show Answer
-                </button>
-              ) : (
-                <div className="mt-8">
-                  <p className="rounded-lg bg-slate-50 px-4 py-3 text-base font-medium text-slate-900">
-                    {currentCard.answer}
-                  </p>
-
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => handleGrade("correct")}
-                      className="flex-1 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
-                    >
-                      Correct
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleGrade("partial")}
-                      className="flex-1 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100"
-                    >
-                      Partially Correct
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleGrade("incorrect")}
-                      className="flex-1 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-800 transition-colors hover:bg-rose-100"
-                    >
-                      Incorrect
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {screen === "complete" && (
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                Session Complete
-              </h2>
-
-              <div className="mt-8 space-y-2 text-left text-base text-slate-700">
-                <p>
-                  Correct:{" "}
-                  <span className="font-medium text-emerald-700">
-                    {correctCount}
-                  </span>
-                </p>
-                <p>
-                  Partial:{" "}
-                  <span className="font-medium text-amber-700">
-                    {partialCount}
-                  </span>
-                </p>
-                <p>
-                  Incorrect:{" "}
-                  <span className="font-medium text-rose-700">
-                    {incorrectCount}
-                  </span>
-                </p>
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={handleStudyAgain}
-                  className="w-full rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800"
-                >
-                  Study Again
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReturnToDashboard}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-                >
-                  Return to Dashboard
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
+      {screen === "course-complete" && activeCourse && (
+        <CourseComplete
+          courseName={activeCourse.name}
+          muscleCount={getCourseProfiles(activeCourse).length}
+          onReturnToDashboard={handleReturnToDashboard}
+        />
+      )}
+    </PageShell>
   );
 }
