@@ -10,6 +10,7 @@ export interface QueuedCard {
   cardKey: CardProgressKey;
   category: CardCategory;
   attachmentPairId?: string;
+  isPendingRetry?: boolean;
 }
 
 type QueueBlock = {
@@ -156,13 +157,13 @@ function arrangeBlocks(
 export function buildReviewQueue(
   units: StudyUnit[],
   progressStore: MasteryProgressStore,
-  now: Date,
+  currentStudyDay: number,
   random: () => number = defaultRandom,
 ): QueuedCard[] {
   const eligibleUnits = units.filter(
     (unit) =>
       isUnitReviewEligible(unit, progressStore) &&
-      isStudyUnitDue(unit, progressStore, now),
+      isStudyUnitDue(unit, progressStore, currentStudyDay),
   );
 
   if (eligibleUnits.length === 0) {
@@ -174,3 +175,19 @@ export function buildReviewQueue(
 
   return arrangedBlocks.flatMap((block) => block.cards);
 }
+
+export function buildReviewQueueFromUnits(
+  units: StudyUnit[],
+  random: () => number = defaultRandom,
+): QueuedCard[] {
+  if (units.length === 0) {
+    return [];
+  }
+
+  const blocks = units.map((unit) => unitToBlock(unit, random));
+  const arrangedBlocks = arrangeBlocks(blocks, random);
+
+  return arrangedBlocks.flatMap((block) => block.cards);
+}
+
+export { isUnitReviewEligible };

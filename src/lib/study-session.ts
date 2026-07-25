@@ -1,8 +1,13 @@
 import type { Card } from "@/src/data/cards";
 import type { MuscleProfile } from "@/src/data/muscle-profile.types";
+import { getRegionById } from "@/src/data/regions";
 
 export function normalizeMuscleName(name: string) {
   return name.trim().toLowerCase();
+}
+
+function normalizeRegion(region: string) {
+  return region.trim().toLowerCase();
 }
 
 export function getCardsForMuscleProfile(
@@ -10,15 +15,18 @@ export function getCardsForMuscleProfile(
   profile: MuscleProfile,
 ): Card[] {
   const targetName = normalizeMuscleName(profile.name);
+  const targetRegion = normalizeRegion(profile.region);
 
   return allCards.filter(
-    (card) => normalizeMuscleName(card.muscle) === targetName,
+    (card) =>
+      normalizeMuscleName(card.muscle) === targetName &&
+      normalizeRegion(card.region) === targetRegion,
   );
 }
 
-export function getModuleDisplayName(region: string) {
-  const formattedRegion =
-    region.charAt(0).toUpperCase() + region.slice(1).toLowerCase();
+export function getModuleDisplayName(regionId: string) {
+  const region = getRegionById(regionId);
+  const displayName = region?.name ?? regionId;
 
-  return `${formattedRegion} Muscles`;
+  return `${displayName} Muscles`;
 }

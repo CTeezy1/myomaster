@@ -2,6 +2,7 @@
 
 import {
   getViewedMuscleBriefIds,
+  hasViewedMuscleBrief,
   markMuscleBriefViewed,
 } from "@/src/lib/muscle-brief-progress";
 import { clearAllLearningProgress } from "@/src/lib/learning-progress-reset";
@@ -13,8 +14,8 @@ export function useMuscleBriefProgress() {
   );
 
   const hasViewed = useCallback(
-    (profileId: string) => viewedIds.includes(profileId),
-    [viewedIds],
+    (profileId: string) => hasViewedMuscleBrief(profileId),
+    [],
   );
 
   const markViewed = useCallback((profileId: string) => {

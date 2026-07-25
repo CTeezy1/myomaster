@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/app/components/ui/Card";
-import { getMuscleProfilesByRegion } from "@/src/data/cervical-muscle-profiles";
+import { getMuscleProfilesByRegion } from "@/src/data/muscle-profiles";
 import type { LibraryRegion } from "@/src/data/library-regions";
 
 type RegionMuscleListProps = {

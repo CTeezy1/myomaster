@@ -6,13 +6,13 @@ import { buildStudyUnitsForMuscle } from "@/src/lib/study-units";
 export function getDueReviewPromptCount(
   muscleIds: string[],
   masteryStore: MasteryProgressStore,
-  now: Date,
+  currentStudyDay: number,
 ): number {
   const units = muscleIds.flatMap((muscleId) =>
     buildStudyUnitsForMuscle(muscleId),
   );
 
-  return buildReviewQueue(units, masteryStore, now).length;
+  return buildReviewQueue(units, masteryStore, currentStudyDay).length;
 }
 
 export function getMasteredMuscleCount(

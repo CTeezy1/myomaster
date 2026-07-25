@@ -48,6 +48,18 @@ function isLearningState(value: unknown): value is LearningState {
   return typeof value === "string" && LEARNING_STATE_SET.has(value);
 }
 
+function parseNextReviewStudyDay(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+    return null;
+  }
+
+  return value;
+}
+
 function parseCardProgress(value: unknown): CardProgress | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -100,6 +112,8 @@ function parseCardProgress(value: unknown): CardProgress | null {
     return null;
   }
 
+  const nextReviewStudyDay = parseNextReviewStudyDay(record.nextReviewStudyDay);
+
   return {
     key: key as CardProgressKey,
     muscleId,
@@ -113,6 +127,7 @@ function parseCardProgress(value: unknown): CardProgress | null {
     currentIntervalDays: record.currentIntervalDays,
     lastReviewedAt: record.lastReviewedAt,
     nextReviewAt: record.nextReviewAt,
+    nextReviewStudyDay,
   };
 }
 
@@ -202,6 +217,7 @@ export function createDefaultCardProgress({
     currentIntervalDays: 0,
     lastReviewedAt: null,
     nextReviewAt: null,
+    nextReviewStudyDay: null,
   };
 }
 

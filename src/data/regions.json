@@ -1,0 +1,10 @@
+[
+  { "id": "cervical", "name": "Cervical" },
+  { "id": "shoulder", "name": "Shoulder" },
+  { "id": "elbow-and-forearm", "name": "Elbow and Forearm" },
+  { "id": "wrist-and-hand", "name": "Wrist and Hand" },
+  { "id": "lumbar-and-thoracic", "name": "Lumbar and Thoracic" },
+  { "id": "hip", "name": "Hip" },
+  { "id": "knee", "name": "Knee" },
+  { "id": "ankle-and-foot", "name": "Ankle and Foot" }
+]

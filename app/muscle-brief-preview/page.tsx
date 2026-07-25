@@ -2,7 +2,7 @@
 
 import { MuscleBrief } from "@/app/components/MuscleBrief";
 import { PageShell } from "@/app/components/ui/PageShell";
-import { getMuscleProfileById } from "@/src/data/cervical-muscle-profiles";
+import { getMuscleProfileById } from "@/src/data/muscle-profiles";
 
 export default function MuscleBriefPreviewPage() {
   const profile = getMuscleProfileById("longus-colli");

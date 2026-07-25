@@ -1,4 +1,11 @@
 import { COURSE_DAYS } from "@/src/lib/introduction-policy";
+import {
+  DEFAULT_COURSE_ID,
+  LEGACY_CERVICAL_COURSE_ID,
+} from "@/src/config/study-flow";
+import type {
+  CardProgressKey,
+} from "@/src/lib/card-progress-key";
 import type {
   CourseProgress,
   CourseProgressStore,
@@ -88,6 +95,47 @@ function parseIntroductionDates(value: unknown): Record<string, string> {
   return dates;
 }
 
+function parseIntroductionStudyDays(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  const studyDays: Record<string, number> = {};
+
+  for (const [muscleId, studyDay] of Object.entries(value)) {
+    const normalizedMuscleId = muscleId.trim();
+
+    if (
+      !normalizedMuscleId ||
+      typeof studyDay !== "number" ||
+      !Number.isInteger(studyDay) ||
+      studyDay < 1
+    ) {
+      continue;
+    }
+
+    studyDays[normalizedMuscleId] = studyDay;
+  }
+
+  return studyDays;
+}
+
+function clampStudyDay(studyDay: number): number {
+  if (!Number.isInteger(studyDay)) {
+    return 1;
+  }
+
+  return Math.min(COURSE_DAYS, Math.max(1, studyDay));
+}
+
+function parseCurrentStudyDay(value: unknown): number {
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    return 1;
+  }
+
+  return clampStudyDay(value);
+}
+
 function parseRecentGrades(value: unknown): Grade[] {
   if (!Array.isArray(value)) {
     return [];
@@ -120,13 +168,25 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
 
   const introducedMuscleIds = parseStringArray(record.introducedMuscleIds);
   const introductionDates = parseIntroductionDates(record.introductionDates);
+  const introductionStudyDays = parseIntroductionStudyDays(
+    record.introductionStudyDays,
+  );
   const recentGrades = parseRecentGrades(record.recentGrades);
+  const currentStudyDay = parseCurrentStudyDay(record.currentStudyDay);
+  const carriedOverRetryKeys = parseStringArray(
+    record.carriedOverRetryKeys,
+  ) as CardProgressKey[];
 
   const filteredIntroductionDates: Record<string, string> = {};
+  const filteredIntroductionStudyDays: Record<string, number> = {};
 
   for (const muscleId of introducedMuscleIds) {
     if (introductionDates[muscleId]) {
       filteredIntroductionDates[muscleId] = introductionDates[muscleId];
+    }
+
+    if (introductionStudyDays[muscleId]) {
+      filteredIntroductionStudyDays[muscleId] = introductionStudyDays[muscleId];
     }
   }
 
@@ -134,9 +194,12 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
     version: STORE_VERSION,
     courseId,
     startedAt: record.startedAt,
+    currentStudyDay,
     introducedMuscleIds,
     introductionDates: filteredIntroductionDates,
+    introductionStudyDays: filteredIntroductionStudyDays,
     recentGrades,
+    carriedOverRetryKeys,
   };
 }
 
@@ -230,14 +293,103 @@ function gradeScore(grade: Grade): number {
   }
 }
 
+function hasStoredCourseActivity(progress: CourseProgress | undefined): boolean {
+  if (!progress) {
+    return false;
+  }
+
+  return (
+    progress.startedAt !== null ||
+    progress.introducedMuscleIds.length > 0 ||
+    progress.recentGrades.length > 0
+  );
+}
+
+export function migrateLegacyCourseProgressIfNeeded(
+  programCourseId: string = DEFAULT_COURSE_ID,
+  legacyCourseIds: string[] = [LEGACY_CERVICAL_COURSE_ID],
+): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const store = readStore();
+
+  if (hasStoredCourseActivity(store.courses[programCourseId])) {
+    return;
+  }
+
+  for (const legacyCourseId of legacyCourseIds) {
+    const legacyProgress = store.courses[legacyCourseId];
+
+    if (!hasStoredCourseActivity(legacyProgress)) {
+      continue;
+    }
+
+    const migrated: CourseProgress = normalizeCourseProgress({
+      ...legacyProgress!,
+      courseId: programCourseId,
+    });
+
+    store.courses[programCourseId] = migrated;
+    writeStore(store);
+    return;
+  }
+}
+
+function normalizeCourseProgress(progress: CourseProgress): CourseProgress {
+  const normalized: CourseProgress = {
+    ...progress,
+    currentStudyDay: clampStudyDay(progress.currentStudyDay ?? 1),
+    introductionStudyDays: { ...progress.introductionStudyDays },
+    carriedOverRetryKeys: progress.carriedOverRetryKeys ?? [],
+  };
+
+  for (const muscleId of normalized.introducedMuscleIds) {
+    if (normalized.introductionStudyDays[muscleId]) {
+      continue;
+    }
+
+    const introducedAt = normalized.introductionDates[muscleId];
+
+    if (!introducedAt || !normalized.startedAt) {
+      normalized.introductionStudyDays[muscleId] = 1;
+      continue;
+    }
+
+    normalized.introductionStudyDays[muscleId] =
+      getCourseDay(normalized.startedAt, new Date(introducedAt)) ?? 1;
+  }
+
+  const hasLegacyCalendarProgress =
+    normalized.startedAt !== null &&
+    (progress.currentStudyDay === undefined ||
+      progress.introductionStudyDays === undefined);
+
+  if (hasLegacyCalendarProgress) {
+    const calendarDay = getCourseDay(normalized.startedAt, new Date());
+
+    if (calendarDay !== null) {
+      normalized.currentStudyDay = calendarDay;
+    }
+  }
+
+  normalized.currentStudyDay = clampStudyDay(normalized.currentStudyDay);
+
+  return normalized;
+}
+
 export function createDefaultCourseProgress(courseId: string): CourseProgress {
   return {
     version: STORE_VERSION,
     courseId,
     startedAt: null,
+    currentStudyDay: 1,
     introducedMuscleIds: [],
     introductionDates: {},
+    introductionStudyDays: {},
     recentGrades: [],
+    carriedOverRetryKeys: [],
   };
 }
 
@@ -258,9 +410,36 @@ export function clearCourseProgress() {
 }
 
 export function getCourseProgress(courseId: string): CourseProgress {
+  if (courseId === DEFAULT_COURSE_ID) {
+    migrateLegacyCourseProgressIfNeeded(courseId);
+  }
+
   const progress = readStore().courses[courseId];
 
-  return progress ?? createDefaultCourseProgress(courseId);
+  return normalizeCourseProgress(
+    progress ?? createDefaultCourseProgress(courseId),
+  );
+}
+
+export function getCurrentStudyDay(progress: CourseProgress): number {
+  return clampStudyDay(progress.currentStudyDay);
+}
+
+export function advanceStudyDay(courseId: string): CourseProgress {
+  const progress = getCourseProgress(courseId);
+
+  if (progress.currentStudyDay >= COURSE_DAYS) {
+    return progress;
+  }
+
+  const updated: CourseProgress = {
+    ...progress,
+    currentStudyDay: progress.currentStudyDay + 1,
+  };
+
+  writeCourseProgress(updated);
+
+  return updated;
 }
 
 export function startCourseIfNotStarted(
@@ -323,6 +502,10 @@ export function markMuscleIntroduced(
       ...progress.introductionDates,
       [normalizedMuscleId]: toIsoString(now),
     },
+    introductionStudyDays: {
+      ...progress.introductionStudyDays,
+      [normalizedMuscleId]: getCurrentStudyDay(progress),
+    },
   };
 
   writeCourseProgress(updated);
@@ -332,38 +515,22 @@ export function markMuscleIntroduced(
 
 export function countMusclesIntroducedDuringCurrentCourseWeek(
   progress: CourseProgress,
-  now: Date,
 ): number {
-  if (!progress.startedAt) {
-    return 0;
-  }
-
-  const courseDay = getCourseDay(progress.startedAt, now);
-
-  if (courseDay === null) {
-    return 0;
-  }
-
+  const courseDay = getCurrentStudyDay(progress);
   const currentWeek = getCourseWeek(courseDay);
   const weekStartDay = (currentWeek - 1) * 7 + 1;
   const weekEndDay = currentWeek * 7;
 
   return progress.introducedMuscleIds.filter((muscleId) => {
-    const introducedAt = progress.introductionDates[muscleId];
+    const introductionStudyDay = progress.introductionStudyDays[muscleId];
 
-    if (!introducedAt) {
-      return false;
-    }
-
-    const introductionCourseDay = getCourseDay(progress.startedAt, new Date(introducedAt));
-
-    if (introductionCourseDay === null) {
+    if (!introductionStudyDay) {
       return false;
     }
 
     return (
-      introductionCourseDay >= weekStartDay &&
-      introductionCourseDay <= weekEndDay
+      introductionStudyDay >= weekStartDay &&
+      introductionStudyDay <= weekEndDay
     );
   }).length;
 }
@@ -402,4 +569,37 @@ export function calculateRecentAccuracy(
 
 export function getRecentAccuracyForCourse(courseId: string): number | null {
   return calculateRecentAccuracy(getCourseProgress(courseId).recentGrades);
+}
+
+export function setCarriedOverRetryKeys(
+  courseId: string,
+  keys: CardProgressKey[],
+): CourseProgress {
+  const progress = getCourseProgress(courseId);
+  const carriedOverRetryKeys = parseStringArray(keys) as CardProgressKey[];
+  const updated: CourseProgress = {
+    ...progress,
+    carriedOverRetryKeys,
+  };
+
+  writeCourseProgress(updated);
+
+  return updated;
+}
+
+export function clearCarriedOverRetryKeys(courseId: string): CourseProgress {
+  return setCarriedOverRetryKeys(courseId, []);
+}
+
+export function consumeCarriedOverRetryKeys(
+  courseId: string,
+): CardProgressKey[] {
+  const progress = getCourseProgress(courseId);
+  const keys = progress.carriedOverRetryKeys;
+
+  if (keys.length > 0) {
+    clearCarriedOverRetryKeys(courseId);
+  }
+
+  return keys;
 }

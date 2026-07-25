@@ -6,11 +6,9 @@ import { CourseComplete } from "@/app/components/CourseComplete";
 import { Dashboard } from "@/app/components/Dashboard";
 import { MuscleBrief } from "@/app/components/MuscleBrief";
 import { SessionComplete } from "@/app/components/SessionComplete";
-import {
-  StudySession,
-  type FeedbackGrade,
-} from "@/app/components/StudySession";
+import { StudySession } from "@/app/components/StudySession";
 import { PageShell } from "@/app/components/ui/PageShell";
+import { useDashboardStats } from "@/src/hooks/useDashboardStats";
 import { useMuscleBriefProgress } from "@/src/hooks/useMuscleBriefProgress";
 import { DEFAULT_COURSE_ID } from "@/src/config/study-flow";
 import { cards } from "@/src/data/cards";
@@ -23,18 +21,17 @@ import {
   getProfileForStudyCard,
 } from "@/src/lib/course-controller";
 import { normalizeCardCategory } from "@/src/lib/card-progress-key";
-import { addRecentGrade, getCourseProgress, markMuscleIntroduced, startCourseIfNotStarted } from "@/src/lib/course-progress";
 import {
-  getDueReviewPromptCount,
-  getIntroducedMuscleCount,
-  getMasteredMuscleCount,
-} from "@/src/lib/dashboard-progress";
-import {
-  findNextGuidedMuscleIndex,
-  getGuidedDailyNewMuscleAllowance,
-  getGuidedStudyButtonLabel,
-  isMuscleGuidedComplete,
-} from "@/src/lib/guided-scheduling";
+  addRecentGrade,
+  advanceStudyDay,
+  clearCarriedOverRetryKeys,
+  getCourseProgress,
+  getCurrentStudyDay,
+  markMuscleIntroduced,
+  setCarriedOverRetryKeys,
+  startCourseIfNotStarted,
+} from "@/src/lib/course-progress";
+import { planDailyWorkload } from "@/src/lib/daily-workload-planning";
 import {
   applyCardGrade,
   introduceMuscleCards,
@@ -48,20 +45,39 @@ import {
   buildMixedReviewQueue,
   resolveQueuedCardToStudyCard,
 } from "@/src/lib/review-session";
+import {
+  advanceSameSessionIndex,
+  applySameSessionGrade,
+  createSameSessionRelearnState,
+  getDisplayedQuestionNumber,
+  getDisplayedQuestionTotal,
+  isSameSessionRelearnComplete,
+  type SameSessionRelearnState,
+} from "@/src/lib/same-session-relearn";
+import {
+  buildStudyDaySession,
+  getBriefMuscleIdForSessionIndex,
+  getNewMuscleIdsForStudyDay,
+  isStudyDaySessionComplete,
+} from "@/src/lib/study-day-session";
 import type { Grade } from "@/src/lib/progress.types";
 import {
-  getCardsForMuscleProfile,
-  getModuleDisplayName,
-} from "@/src/lib/study-session";
+  createInitialCardFeedbackState,
+  returnFromBriefReview,
+  setCardFeedbackGrade,
+  showCardAnswer,
+  type CardFeedbackGrade,
+} from "@/src/lib/quiz-card-state";
 
 type Screen =
   | "dashboard"
   | "brief"
   | "brief-review"
-  | "study"
+  | "study-day"
   | "course-complete"
   | "mixed-review"
-  | "mixed-review-complete";
+  | "mixed-review-complete"
+  | "study-day-complete";
 
 type StudyCard = (typeof cards)[number];
 
@@ -105,31 +121,29 @@ function persistMuscleIntroduction(profileId: string) {
   }
 }
 
-function persistCardGrade(
-  card: StudyCard,
+function persistQueuedCardGrade(
+  queuedCard: QueuedCard,
   course: Course | null,
   grade: Grade,
 ) {
   try {
-    const profile = getProfileForStudyCard(card, course);
-
-    if (!profile) {
-      return;
-    }
-
-    const category = normalizeCardCategory(card.category);
+    const category = normalizeCardCategory(queuedCard.category);
 
     if (!category) {
       return;
     }
 
     const store = readMasteryProgress();
+    const currentStudyDay = course
+      ? getCurrentStudyDay(getCourseProgress(course.id))
+      : 1;
     const updatedStore = applyCardGrade(
       store,
-      profile.id,
+      queuedCard.muscleId,
       category,
       grade,
       new Date(),
+      currentStudyDay,
     );
 
     writeMasteryProgress(updatedStore);
@@ -144,117 +158,156 @@ function persistCardGrade(
 
 export default function Home() {
   const router = useRouter();
-  const { hasViewed, markViewed, resetProgress } = useMuscleBriefProgress();
+  const { markViewed, resetProgress } = useMuscleBriefProgress();
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
   const [currentMuscleIndex, setCurrentMuscleIndex] = useState(0);
   const [studyCards, setStudyCards] = useState<StudyCard[]>(() =>
     cards.map((card) => ({ ...card })),
   );
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [answerShown, setAnswerShown] = useState(false);
-  const [feedbackGrade, setFeedbackGrade] = useState<FeedbackGrade | null>(
-    null,
-  );
+  const [cardFeedback, setCardFeedback] = useState(createInitialCardFeedbackState);
+  const answerShown = cardFeedback.answerShown;
+  const feedbackGrade = cardFeedback.feedbackGrade;
   const [reviewProfile, setReviewProfile] = useState<MuscleProfile | null>(
     null,
   );
   const [correctCount, setCorrectCount] = useState(0);
   const [partialCount, setPartialCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
-  const [reviewQueue, setReviewQueue] = useState<QueuedCard[]>([]);
-  const [reviewCardIndex, setReviewCardIndex] = useState(0);
+  const [studyDaySession, setStudyDaySession] =
+    useState<SameSessionRelearnState | null>(null);
+  const [reviewSession, setReviewSession] =
+    useState<SameSessionRelearnState | null>(null);
+  const {
+    dashboardCourse,
+    totalMuscleCount,
+    totalStudyDays,
+    currentStudyDay,
+    plannedPromptCount,
+    dueReviewPromptCount,
+    newMusclePromptCount,
+    showWorkloadWarning,
+    introducedMuscleCount,
+    masteredMuscleCount,
+    remainingNewMuscleAllowance,
+    canStartGuidedStudy,
+    guidedStudyLabel,
+    canStartReview,
+    canAdvanceStudyDay,
+    refreshDashboardStats,
+  } = useDashboardStats(screen === "dashboard");
 
   const selectedProfile = activeCourse
     ? getCourseProfileAtIndex(activeCourse, currentMuscleIndex)
     : undefined;
-  const sessionCards = selectedProfile
-    ? getCardsForMuscleProfile(studyCards, selectedProfile)
-    : [];
-  const currentCard = sessionCards[currentCardIndex];
-  const dashboardCourse = getCourseById(DEFAULT_COURSE_ID);
-  const dashboardMuscleIds = dashboardCourse?.muscleProfileIds ?? [];
-  const dashboardMasteryStore = readMasteryProgress();
-  const dashboardCourseProgress = getCourseProgress(DEFAULT_COURSE_ID);
-  const dashboardNow = new Date();
-  const dueReviewPromptCount = getDueReviewPromptCount(
-    dashboardMuscleIds,
-    dashboardMasteryStore,
-    dashboardNow,
-  );
-  const introducedMuscleCount = getIntroducedMuscleCount(
-    dashboardMuscleIds,
-    dashboardCourseProgress.introducedMuscleIds,
-  );
-  const masteredMuscleCount = getMasteredMuscleCount(
-    dashboardMuscleIds,
-    dashboardMasteryStore,
-  );
-  const totalMuscleCount = dashboardMuscleIds.length;
-  const remainingNewMuscleAllowance = dashboardCourse
-    ? getGuidedDailyNewMuscleAllowance(
-        dashboardCourseProgress,
-        dashboardMuscleIds,
-        dashboardMasteryStore,
-        dashboardNow,
-      )
-    : 0;
-  const nextGuidedMuscle = dashboardCourse
-    ? findNextGuidedMuscleIndex(
-        dashboardCourse,
-        dashboardCourseProgress,
-        dashboardMasteryStore,
-        remainingNewMuscleAllowance,
-      )
-    : null;
-  const canStartGuidedStudy = nextGuidedMuscle !== null;
-  const guidedStudyLabel = getGuidedStudyButtonLabel(nextGuidedMuscle);
-  const mixedReviewQueuedCard = reviewQueue[reviewCardIndex];
-  const mixedReviewStudyCard =
-    dashboardCourse && mixedReviewQueuedCard
+  const activeSession =
+    screen === "mixed-review" || (screen === "brief-review" && reviewSession)
+      ? reviewSession
+      : studyDaySession;
+  const activeQueuedCard = activeSession?.queue[activeSession.index];
+  const activeStudyCard =
+    activeQueuedCard && activeCourse
       ? resolveQueuedCardToStudyCard(
-          mixedReviewQueuedCard,
+          activeQueuedCard,
           studyCards,
-          dashboardCourse,
+          activeCourse,
         )
       : undefined;
   const isMixedReviewFlow =
     screen === "mixed-review" ||
-    (screen === "brief-review" && reviewQueue.length > 0);
-  const activeStudyCard = isMixedReviewFlow ? mixedReviewStudyCard : currentCard;
+    (screen === "brief-review" && reviewSession !== null);
 
-  function resetMixedReviewSession() {
-    setReviewQueue([]);
-    setReviewCardIndex(0);
-  }
-
-  function resetMuscleSession() {
-    setCurrentCardIndex(0);
-    setAnswerShown(false);
-    setFeedbackGrade(null);
+  function resetSessionStats() {
+    setCardFeedback(createInitialCardFeedbackState());
     setReviewProfile(null);
     setCorrectCount(0);
     setPartialCount(0);
     setIncorrectCount(0);
   }
 
+  function advanceToNextCard(session: SameSessionRelearnState) {
+    setCardFeedback(createInitialCardFeedbackState());
+    completeActiveSession(advanceSameSessionIndex(session));
+  }
+
+  function resetStudyDaySession() {
+    setStudyDaySession(null);
+  }
+
+  function resetReviewSession() {
+    setReviewSession(null);
+  }
+
   function resetCourse() {
     setActiveCourse(null);
     setCurrentMuscleIndex(0);
-    resetMuscleSession();
+    resetStudyDaySession();
+    resetReviewSession();
+    resetSessionStats();
   }
 
-  function beginMuscle(profile: MuscleProfile, course: Course) {
-    resetMuscleSession();
-    persistMuscleIntroduction(profile.id);
-    persistCourseMuscleIntroduction(course.id, profile.id);
+  function setMuscleIndexForId(course: Course, muscleId: string) {
+    const index = course.muscleProfileIds.indexOf(muscleId);
 
-    if (hasViewed(profile.id)) {
-      setScreen("study");
+    if (index >= 0) {
+      setCurrentMuscleIndex(index);
+    }
+  }
+
+  function introduceNewMusclesForSession(
+    course: Course,
+    remainingNewAllowance: number,
+  ) {
+    const courseProgress = getCourseProgress(course.id);
+    const newMuscleIds = getNewMuscleIdsForStudyDay(
+      course,
+      courseProgress,
+      remainingNewAllowance,
+    );
+
+    for (const muscleId of newMuscleIds) {
+      persistMuscleIntroduction(muscleId);
+      persistCourseMuscleIntroduction(course.id, muscleId);
+    }
+  }
+
+  function openBriefForMuscleId(course: Course, muscleId: string) {
+    setMuscleIndexForId(course, muscleId);
+    setScreen("brief");
+  }
+
+  function proceedToSessionCard(session: SameSessionRelearnState, course: Course) {
+    const briefMuscleId = getBriefMuscleIdForSessionIndex(
+      session.queue,
+      session.index,
+    );
+
+    if (briefMuscleId) {
+      openBriefForMuscleId(course, briefMuscleId);
       return;
     }
 
-    setScreen("brief");
+    setScreen(isMixedReviewFlow ? "mixed-review" : "study-day");
+  }
+
+  function finishStudyDaySession(session?: SameSessionRelearnState | null) {
+    if (session && activeCourse) {
+      if (session.dailyCapReached && session.unresolvedKeys.length > 0) {
+        setCarriedOverRetryKeys(activeCourse.id, session.unresolvedKeys);
+      } else if (session.unresolvedKeys.length === 0) {
+        clearCarriedOverRetryKeys(activeCourse.id);
+      }
+    }
+
+    resetStudyDaySession();
+    resetSessionStats();
+    setActiveCourse(null);
+    refreshDashboardStats();
+  }
+
+  function handleFinishStudyDayComplete(session?: SameSessionRelearnState | null) {
+    finishStudyDaySession(session ?? studyDaySession);
+    setScreen("dashboard");
   }
 
   function handleStartMixedReview() {
@@ -262,10 +315,12 @@ export default function Home() {
       return;
     }
 
+    const courseProgress = getCourseProgress(dashboardCourse.id);
+    const currentStudyDayValue = getCurrentStudyDay(courseProgress);
     const queue = buildMixedReviewQueue(
-      dashboardMuscleIds,
+      dashboardCourse.muscleProfileIds,
       readMasteryProgress(),
-      new Date(),
+      currentStudyDayValue,
     ).filter(
       (queued) =>
         resolveQueuedCardToStudyCard(queued, studyCards, dashboardCourse) !==
@@ -276,30 +331,16 @@ export default function Home() {
       return;
     }
 
-    resetMuscleSession();
-    setReviewQueue(queue);
-    setReviewCardIndex(0);
+    resetSessionStats();
+    setReviewSession(createSameSessionRelearnState(queue));
+    resetStudyDaySession();
     setActiveCourse(dashboardCourse);
     setScreen("mixed-review");
   }
 
-  function advanceMixedReviewCard() {
-    setAnswerShown(false);
-    setFeedbackGrade(null);
-
-    const nextIndex = reviewCardIndex + 1;
-
-    if (nextIndex >= reviewQueue.length) {
-      setScreen("mixed-review-complete");
-      return;
-    }
-
-    setReviewCardIndex(nextIndex);
-  }
-
   function handleFinishMixedReview() {
-    resetMixedReviewSession();
-    resetMuscleSession();
+    resetReviewSession();
+    resetSessionStats();
     setActiveCourse(null);
     setScreen("dashboard");
   }
@@ -310,33 +351,30 @@ export default function Home() {
     if (!course) return;
 
     persistCourseStart(course.id);
-    resetMixedReviewSession();
+    resetReviewSession();
 
     const courseProgress = getCourseProgress(course.id);
     const masteryStore = readMasteryProgress();
-    const now = new Date();
-    const remainingNewAllowance = getGuidedDailyNewMuscleAllowance(
-      courseProgress,
-      course.muscleProfileIds,
-      masteryStore,
-      now,
-    );
-    const next = findNextGuidedMuscleIndex(
+    const workloadPlan = planDailyWorkload(
       course,
       courseProgress,
       masteryStore,
-      remainingNewAllowance,
     );
 
-    if (!next) return;
+    if (workloadPlan.queue.length === 0) {
+      return;
+    }
 
-    const profile = getCourseProfileAtIndex(course, next.index);
-
-    if (!profile) return;
-
+    introduceNewMusclesForSession(course, workloadPlan.newMuscleAllowance);
+    resetSessionStats();
+    const session = buildStudyDaySession(
+      course,
+      courseProgress,
+      masteryStore,
+    );
+    setStudyDaySession(session);
     setActiveCourse(course);
-    setCurrentMuscleIndex(next.index);
-    beginMuscle(profile, course);
+    proceedToSessionCard(session, course);
   }
 
   function handleStartPractice() {
@@ -344,67 +382,20 @@ export default function Home() {
       markViewed(selectedProfile.id);
     }
 
-    resetMuscleSession();
-    setScreen("study");
-  }
+    resetSessionStats();
 
-  function advanceToNextCard() {
-    setAnswerShown(false);
-    setFeedbackGrade(null);
-
-    const nextIndex = currentCardIndex + 1;
-    setCurrentCardIndex(nextIndex);
-
-    if (nextIndex >= sessionCards.length) {
-      advanceCourseAfterMuscle();
-    }
-  }
-
-  function advanceCourseAfterMuscle() {
-    if (!activeCourse) return;
-
-    const courseProgress = getCourseProgress(activeCourse.id);
-    const masteryStore = readMasteryProgress();
-    const now = new Date();
-    const remainingNewAllowance = getGuidedDailyNewMuscleAllowance(
-      courseProgress,
-      activeCourse.muscleProfileIds,
-      masteryStore,
-      now,
-    );
-    const next = findNextGuidedMuscleIndex(
-      activeCourse,
-      courseProgress,
-      masteryStore,
-      remainingNewAllowance,
-    );
-
-    if (!next) {
-      const allComplete = activeCourse.muscleProfileIds.every(
-        (muscleId) =>
-          courseProgress.introducedMuscleIds.includes(muscleId) &&
-          isMuscleGuidedComplete(muscleId, masteryStore),
-      );
-
-      resetMuscleSession();
-
-      if (allComplete) {
-        setScreen("course-complete");
-        return;
-      }
-
-      setActiveCourse(null);
-      setScreen("dashboard");
+    if (studyDaySession && activeCourse) {
+      setScreen("study-day");
       return;
     }
 
-    setCurrentMuscleIndex(next.index);
-    beginMuscle(getCourseProfileAtIndex(activeCourse, next.index)!, activeCourse);
+    setScreen("study-day");
   }
 
-  function applyGrade(
+  function applyGradeToCard(
     type: "correct" | "partial" | "incorrect",
     card: StudyCard,
+    queuedCard: QueuedCard,
   ) {
     if (type === "correct") setCorrectCount((count) => count + 1);
     if (type === "partial") setPartialCount((count) => count + 1);
@@ -418,36 +409,78 @@ export default function Home() {
       ),
     );
 
-    persistCardGrade(card, activeCourse, type);
+    persistQueuedCardGrade(queuedCard, activeCourse, type);
   }
 
-  function handleGrade(type: "correct" | "partial" | "incorrect") {
-    if (!activeStudyCard || feedbackGrade !== null) return;
-
-    applyGrade(type, activeStudyCard);
-
-    if (type === "correct") {
-      if (isMixedReviewFlow) {
-        advanceMixedReviewCard();
+  function completeActiveSession(session: SameSessionRelearnState) {
+    if (isMixedReviewFlow) {
+      if (isSameSessionRelearnComplete(session)) {
+        setReviewSession(session);
+        setScreen("mixed-review-complete");
         return;
       }
 
-      advanceToNextCard();
+      setReviewSession(session);
+      setScreen("mixed-review");
       return;
     }
 
-    setFeedbackGrade(type);
+    if (isStudyDaySessionComplete(session)) {
+      setStudyDaySession(session);
+
+      if (session.dailyCapReached) {
+        setScreen("study-day-complete");
+        return;
+      }
+
+      handleFinishStudyDayComplete(session);
+      return;
+    }
+
+    setStudyDaySession(session);
+
+    if (activeCourse) {
+      proceedToSessionCard(session, activeCourse);
+    }
+  }
+
+  function handleGrade(type: "correct" | "partial" | "incorrect") {
+    if (
+      !activeStudyCard ||
+      !activeQueuedCard ||
+      !activeSession ||
+      feedbackGrade !== null ||
+      activeSession.dailyCapReached
+    ) {
+      return;
+    }
+
+    applyGradeToCard(type, activeStudyCard, activeQueuedCard);
+
+    const gradedSession = applySameSessionGrade(
+      activeSession,
+      activeQueuedCard,
+      type,
+    );
+
+    if (type === "correct") {
+      advanceToNextCard(gradedSession);
+      return;
+    }
+
+    if (isMixedReviewFlow) {
+      setReviewSession(gradedSession);
+    } else {
+      setStudyDaySession(gradedSession);
+    }
+
+    setCardFeedback((state) => setCardFeedbackGrade(state, type as CardFeedbackGrade));
   }
 
   function handleContinueAfterFeedback() {
-    if (!feedbackGrade) return;
+    if (!feedbackGrade || !activeSession) return;
 
-    if (isMixedReviewFlow) {
-      advanceMixedReviewCard();
-      return;
-    }
-
-    advanceToNextCard();
+    advanceToNextCard(activeSession);
   }
 
   function handleReviewBrief() {
@@ -463,21 +496,34 @@ export default function Home() {
 
   function handleReturnToPractice() {
     setReviewProfile(null);
-    setScreen(isMixedReviewFlow ? "mixed-review" : "study");
+    setCardFeedback((state) => returnFromBriefReview(state));
+    setScreen(isMixedReviewFlow ? "mixed-review" : "study-day");
   }
 
   function handleReturnToDashboard() {
-    resetMixedReviewSession();
+    resetReviewSession();
+    resetStudyDaySession();
     resetCourse();
     setScreen("dashboard");
+  }
+
+  function handleAdvanceStudyDay() {
+    if (!dashboardCourse || !canAdvanceStudyDay) {
+      return;
+    }
+
+    advanceStudyDay(dashboardCourse.id);
+    refreshDashboardStats();
   }
 
   function handleResetLearningProgress() {
     resetProgress();
-    resetMixedReviewSession();
+    resetReviewSession();
+    resetStudyDaySession();
     resetCourse();
     setStudyCards(cards.map((card) => ({ ...card })));
     setScreen("dashboard");
+    refreshDashboardStats();
   }
 
   return (
@@ -485,7 +531,12 @@ export default function Home() {
       {screen === "dashboard" && dashboardCourse && (
         <Dashboard
           courseName={dashboardCourse.name}
+          currentStudyDay={currentStudyDay}
+          totalStudyDays={totalStudyDays}
+          plannedPromptCount={plannedPromptCount}
           dueReviewPromptCount={dueReviewPromptCount}
+          newMusclePromptCount={newMusclePromptCount}
+          showWorkloadWarning={showWorkloadWarning}
           introducedMuscleCount={introducedMuscleCount}
           masteredMuscleCount={masteredMuscleCount}
           totalMuscleCount={totalMuscleCount}
@@ -493,8 +544,10 @@ export default function Home() {
           guidedStudyLabel={guidedStudyLabel}
           canStartGuidedStudy={canStartGuidedStudy}
           remainingNewMuscleAllowance={remainingNewMuscleAllowance}
+          canAdvanceStudyDay={canAdvanceStudyDay}
+          onAdvanceStudyDay={handleAdvanceStudyDay}
           onStartReview={handleStartMixedReview}
-          canStartReview={dueReviewPromptCount > 0}
+          canStartReview={canStartReview}
           onOpenMuscleLibrary={() => router.push("/library")}
           onResetLearningProgress={handleResetLearningProgress}
         />
@@ -516,17 +569,19 @@ export default function Home() {
         />
       )}
 
-      {screen === "mixed-review" && activeStudyCard && dashboardCourse && (
+      {screen === "mixed-review" && activeStudyCard && activeSession && dashboardCourse && (
         <StudySession
           moduleName={`${dashboardCourse.name} Review`}
-          currentIndex={reviewCardIndex}
-          totalCards={reviewQueue.length}
+          currentIndex={activeSession.index}
+          totalCards={activeSession.queue.length}
           muscle={activeStudyCard.muscle}
           question={getQuestion(activeStudyCard.category)}
           answer={activeStudyCard.answer}
           answerShown={answerShown}
           feedbackGrade={feedbackGrade}
-          onShowAnswer={() => setAnswerShown(true)}
+          onShowAnswer={() =>
+            setCardFeedback((state) => showCardAnswer(state))
+          }
           onGrade={handleGrade}
           onReviewBrief={handleReviewBrief}
           onContinue={handleContinueAfterFeedback}
@@ -544,20 +599,34 @@ export default function Home() {
         />
       )}
 
-      {screen === "study" && selectedProfile && currentCard && (
+      {screen === "study-day" && activeStudyCard && activeSession && activeCourse && (
         <StudySession
-          moduleName={getModuleDisplayName(selectedProfile.region)}
-          currentIndex={currentCardIndex}
-          totalCards={sessionCards.length}
-          muscle={currentCard.muscle}
-          question={getQuestion(currentCard.category)}
-          answer={currentCard.answer}
+          moduleName={`${activeCourse.name} · Study Day ${currentStudyDay}`}
+          currentIndex={getDisplayedQuestionNumber(activeSession) - 1}
+          totalCards={getDisplayedQuestionTotal(activeSession)}
+          muscle={activeStudyCard.muscle}
+          question={getQuestion(activeStudyCard.category)}
+          answer={activeStudyCard.answer}
           answerShown={answerShown}
           feedbackGrade={feedbackGrade}
-          onShowAnswer={() => setAnswerShown(true)}
+          onShowAnswer={() =>
+            setCardFeedback((state) => showCardAnswer(state))
+          }
           onGrade={handleGrade}
           onReviewBrief={handleReviewBrief}
           onContinue={handleContinueAfterFeedback}
+        />
+      )}
+
+      {screen === "study-day-complete" && (
+        <SessionComplete
+          correctCount={correctCount}
+          partialCount={partialCount}
+          incorrectCount={incorrectCount}
+          title="Study day complete"
+          description="Today's 40-question limit is complete. Unresolved cards will return first next study day."
+          showStudyAgain={false}
+          onReturnToDashboard={handleFinishStudyDayComplete}
         />
       )}
 

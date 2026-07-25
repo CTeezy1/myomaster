@@ -2,54 +2,35 @@ import type { Course } from "@/src/lib/course.types";
 import {
   calculateRecentAccuracy,
   countMusclesIntroducedDuringCurrentCourseWeek,
-  getCourseDay,
+  getCurrentStudyDay,
 } from "@/src/lib/course-progress";
 import { CARD_CATEGORIES, buildCardProgressKey } from "@/src/lib/card-progress-key";
 import { getDueReviewPromptCount } from "@/src/lib/dashboard-progress";
 import { getDailyNewMuscleTarget } from "@/src/lib/introduction-policy";
 import type { CourseProgress, MasteryProgressStore } from "@/src/lib/progress.types";
+import { applyAdaptiveNewMuscleAllowance } from "@/src/lib/daily-workload-planning";
 
 export function countMusclesIntroducedOnCourseDay(
   progress: CourseProgress,
   courseDay: number,
-  now: Date,
 ): number {
-  if (!progress.startedAt) {
-    return 0;
-  }
-
-  return progress.introducedMuscleIds.filter((muscleId) => {
-    const introducedAt = progress.introductionDates[muscleId];
-
-    if (!introducedAt) {
-      return false;
-    }
-
-    return getCourseDay(progress.startedAt, new Date(introducedAt)) === courseDay;
-  }).length;
+  return progress.introducedMuscleIds.filter(
+    (muscleId) => progress.introductionStudyDays[muscleId] === courseDay,
+  ).length;
 }
 
-export function getGuidedDailyNewMuscleAllowance(
+export function getBaseDailyNewMuscleAllowance(
   courseProgress: CourseProgress,
   muscleIds: string[],
   masteryStore: MasteryProgressStore,
-  now: Date,
 ): number {
-  const courseDay = courseProgress.startedAt
-    ? getCourseDay(courseProgress.startedAt, now)
-    : 1;
-
-  if (courseDay === null) {
-    return 0;
-  }
-
-  const introducedThisWeek = courseProgress.startedAt
-    ? countMusclesIntroducedDuringCurrentCourseWeek(courseProgress, now)
-    : 0;
+  const courseDay = getCurrentStudyDay(courseProgress);
+  const introducedThisWeek =
+    countMusclesIntroducedDuringCurrentCourseWeek(courseProgress);
   const overduePromptCount = getDueReviewPromptCount(
     muscleIds,
     masteryStore,
-    now,
+    courseDay,
   );
   const recentAccuracy = calculateRecentAccuracy(courseProgress.recentGrades);
   const dailyTarget = getDailyNewMuscleTarget(
@@ -58,11 +39,31 @@ export function getGuidedDailyNewMuscleAllowance(
     overduePromptCount,
     recentAccuracy,
   );
-  const introducedToday = courseProgress.startedAt
-    ? countMusclesIntroducedOnCourseDay(courseProgress, courseDay, now)
-    : 0;
+  const introducedToday = countMusclesIntroducedOnCourseDay(
+    courseProgress,
+    courseDay,
+  );
 
   return Math.max(0, dailyTarget - introducedToday);
+}
+
+export function getGuidedDailyNewMuscleAllowance(
+  courseProgress: CourseProgress,
+  muscleIds: string[],
+  masteryStore: MasteryProgressStore,
+): number {
+  const mandatoryPromptCount = getDueReviewPromptCount(
+    muscleIds,
+    masteryStore,
+    getCurrentStudyDay(courseProgress),
+  );
+  const baseAllowance = getBaseDailyNewMuscleAllowance(
+    courseProgress,
+    muscleIds,
+    masteryStore,
+  );
+
+  return applyAdaptiveNewMuscleAllowance(baseAllowance, mandatoryPromptCount);
 }
 
 export function isMuscleGuidedComplete(
@@ -138,4 +139,38 @@ export function getGuidedStudyButtonLabel(
   }
 
   return "Start Studying";
+}
+
+export function canAdvanceStudyDay(
+  courseProgress: CourseProgress,
+  muscleIds: string[],
+  masteryStore: MasteryProgressStore,
+): boolean {
+  const currentStudyDay = getCurrentStudyDay(courseProgress);
+  const remainingNewAllowance = getGuidedDailyNewMuscleAllowance(
+    courseProgress,
+    muscleIds,
+    masteryStore,
+  );
+  const dueReviewPromptCount = getDueReviewPromptCount(
+    muscleIds,
+    masteryStore,
+    currentStudyDay,
+  );
+
+  return (
+    remainingNewAllowance === 0 &&
+    dueReviewPromptCount === 0 &&
+    !hasIncompleteGuidedMuscle(
+      {
+        id: courseProgress.courseId,
+        name: "",
+        region: "",
+        muscleProfileIds: muscleIds,
+      },
+      courseProgress,
+      masteryStore,
+    ) &&
+    currentStudyDay < 105
+  );
 }

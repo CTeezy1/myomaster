@@ -1,7 +1,7 @@
 import { LibraryMuscleBriefView } from "@/app/components/library/LibraryMuscleBriefView";
 import { LibraryNotFound } from "@/app/components/library/LibraryNotFound";
 import { PageShell } from "@/app/components/ui/PageShell";
-import { getMuscleProfileById } from "@/src/data/cervical-muscle-profiles";
+import { getMuscleProfileById } from "@/src/data/muscle-profiles";
 import { getLibraryRegion } from "@/src/data/library-regions";
 
 type LibraryMuscleBriefPageProps = {

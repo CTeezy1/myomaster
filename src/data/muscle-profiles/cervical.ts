@@ -1,4 +1,4 @@
-import type { MuscleProfile } from "./muscle-profile.types";
+import type { MuscleProfile } from "@/src/data/muscle-profile.types";
 
 function muscleImages(id: string) {
   const basePath = `/images/muscles/cervical/${id}`;
@@ -167,29 +167,3 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     ],
   },
 ];
-
-function normalizeName(value: string) {
-  return value.trim().toLowerCase();
-}
-
-export function getMuscleProfileById(id: string): MuscleProfile | undefined {
-  return cervicalMuscleProfiles.find((profile) => profile.id === id);
-}
-
-export function getMuscleProfileByName(
-  name: string,
-): MuscleProfile | undefined {
-  const normalized = normalizeName(name);
-
-  return cervicalMuscleProfiles.find(
-    (profile) => normalizeName(profile.name) === normalized,
-  );
-}
-
-export function getMuscleProfilesByRegion(region: string): MuscleProfile[] {
-  const normalized = normalizeName(region);
-
-  return cervicalMuscleProfiles
-    .filter((profile) => normalizeName(profile.region) === normalized)
-    .sort((a, b) => a.order - b.order);
-}

@@ -6,6 +6,7 @@ type SessionCompleteProps = {
   partialCount: number;
   incorrectCount: number;
   title?: string;
+  description?: string;
   showStudyAgain?: boolean;
   onStudyAgain?: () => void;
   onReturnToDashboard: () => void;
@@ -41,11 +42,15 @@ export function SessionComplete({
   partialCount,
   incorrectCount,
   title = "Nice work!",
+  description,
   showStudyAgain = true,
   onStudyAgain,
   onReturnToDashboard,
 }: SessionCompleteProps) {
   const total = correctCount + partialCount + incorrectCount;
+  const summary =
+    description ??
+    `You reviewed ${total} ${total === 1 ? "card" : "cards"} this session.`;
 
   return (
     <div className="w-full">
@@ -58,7 +63,7 @@ export function SessionComplete({
             {title}
           </h2>
           <p className="text-sm text-text-secondary sm:text-base">
-            You reviewed {total} {total === 1 ? "card" : "cards"} this session.
+            {summary}
           </p>
         </div>
 

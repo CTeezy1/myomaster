@@ -3,7 +3,12 @@ import { Card } from "@/app/components/ui/Card";
 
 type DashboardProps = {
   courseName: string;
+  currentStudyDay: number;
+  totalStudyDays: number;
+  plannedPromptCount: number;
   dueReviewPromptCount: number;
+  newMusclePromptCount: number;
+  showWorkloadWarning: boolean;
   introducedMuscleCount: number;
   masteredMuscleCount: number;
   totalMuscleCount: number;
@@ -11,6 +16,8 @@ type DashboardProps = {
   guidedStudyLabel: string;
   canStartGuidedStudy: boolean;
   remainingNewMuscleAllowance: number;
+  canAdvanceStudyDay: boolean;
+  onAdvanceStudyDay?: () => void;
   onStartReview?: () => void;
   canStartReview?: boolean;
   onOpenMuscleLibrary: () => void;
@@ -42,7 +49,12 @@ function StatItem({
 
 export function Dashboard({
   courseName,
+  currentStudyDay,
+  totalStudyDays,
+  plannedPromptCount,
   dueReviewPromptCount,
+  newMusclePromptCount,
+  showWorkloadWarning,
   introducedMuscleCount,
   masteredMuscleCount,
   totalMuscleCount,
@@ -50,6 +62,8 @@ export function Dashboard({
   guidedStudyLabel,
   canStartGuidedStudy,
   remainingNewMuscleAllowance,
+  canAdvanceStudyDay,
+  onAdvanceStudyDay,
   onStartReview,
   canStartReview = false,
   onOpenMuscleLibrary,
@@ -80,15 +94,41 @@ export function Dashboard({
               {courseName}
             </h2>
             <p className="text-sm text-text-secondary">
-              {totalMuscleCount} muscles in this course.
+              {totalMuscleCount} muscles in this course. Study day {currentStudyDay}{" "}
+              of {totalStudyDays}.
             </p>
           </div>
 
+          <p className="text-sm leading-relaxed text-text-secondary">
+            For best retention, complete about one study day per calendar day.
+          </p>
+
+          {showWorkloadWarning && (
+            <p className="rounded-[var(--radius)] border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+              Heavy review load today ({dueReviewPromptCount} due prompts). New
+              muscle introductions are paused until your due workload eases.
+            </p>
+          )}
+
           <div className="grid gap-3 sm:grid-cols-2">
+            <StatItem
+              label="Study Day"
+              value={`${currentStudyDay} / ${totalStudyDays}`}
+              highlight
+            />
+            <StatItem
+              label="Planned Prompts"
+              value={plannedPromptCount}
+              highlight
+            />
             <StatItem
               label="Due Review Prompts"
               value={dueReviewPromptCount}
               highlight
+            />
+            <StatItem
+              label="New Muscle Prompts"
+              value={newMusclePromptCount}
             />
             <StatItem
               label="Introduced Muscles"
@@ -110,6 +150,17 @@ export function Dashboard({
           >
             {guidedStudyLabel}
           </Button>
+
+          {onAdvanceStudyDay && (
+            <Button
+              fullWidth
+              variant="secondary"
+              disabled={!canAdvanceStudyDay}
+              onClick={onAdvanceStudyDay}
+            >
+              Start Next Study Day
+            </Button>
+          )}
 
           {onStartReview && (
             <Button

@@ -1,19 +1,16 @@
-import { getMuscleProfilesByRegion } from "@/src/data/cervical-muscle-profiles";
+import { CANONICAL_REGIONS } from "@/src/data/regions";
+import { getMuscleProfilesByRegion } from "@/src/data/muscle-profiles";
 
 export type LibraryRegion = {
   id: string;
   name: string;
 };
 
-const libraryRegions: LibraryRegion[] = [
-  {
-    id: "cervical",
-    name: "Cervical",
-  },
-];
-
 export function getLibraryRegions(): LibraryRegion[] {
-  return libraryRegions;
+  return CANONICAL_REGIONS.map((region) => ({
+    id: region.id,
+    name: region.name,
+  }));
 }
 
 export function getLibraryRegion(
@@ -21,7 +18,7 @@ export function getLibraryRegion(
 ): LibraryRegion | undefined {
   const normalized = regionId.trim().toLowerCase();
 
-  return libraryRegions.find((region) => region.id === normalized);
+  return getLibraryRegions().find((region) => region.id === normalized);
 }
 
 export function getLibraryRegionMuscleCount(regionId: string): number {

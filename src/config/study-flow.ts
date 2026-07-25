@@ -1,5 +1,6 @@
 /**
- * Default course launched from the dashboard.
- * Swap this ID to start a different regional course later.
+ * Default guided study course and legacy course identifiers.
  */
-export const DEFAULT_COURSE_ID = "cervical";
+export const DEFAULT_COURSE_ID = "myomaster-program";
+
+export const LEGACY_CERVICAL_COURSE_ID = "cervical";

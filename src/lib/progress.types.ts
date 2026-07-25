@@ -22,6 +22,7 @@ export interface CardProgress {
   currentIntervalDays: number;
   lastReviewedAt: string | null;
   nextReviewAt: string | null;
+  nextReviewStudyDay: number | null;
 }
 
 export interface MasteryProgressStore {
@@ -39,9 +40,12 @@ export interface CourseProgress {
   version: 1;
   courseId: string;
   startedAt: string | null;
+  currentStudyDay: number;
   introducedMuscleIds: string[];
   introductionDates: Record<string, string>;
+  introductionStudyDays: Record<string, number>;
   recentGrades: Grade[];
+  carriedOverRetryKeys: CardProgressKey[];
 }
 
 export interface CourseProgressStore {

@@ -76,6 +76,7 @@ export function applyCardGrade(
   category: CardCategory,
   grade: Grade,
   reviewedAt: Date,
+  currentStudyDay: number,
 ): MasteryProgressStore {
   const entry = getOrCreateCardProgress(store, muscleId, category);
 
@@ -87,6 +88,7 @@ export function applyCardGrade(
     entry.progress,
     grade,
     reviewedAt,
+    currentStudyDay,
   );
 
   return {

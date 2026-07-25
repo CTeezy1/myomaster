@@ -49,9 +49,17 @@ function resolveStateAfterPartial(previousState: LearningState): LearningState {
   return "learning";
 }
 
+function resolveNextReviewStudyDay(
+  currentStudyDay: number,
+  intervalDays: number,
+): number {
+  return currentStudyDay + intervalDays;
+}
+
 function applyCorrect(
   progress: CardProgress,
   reviewedAt: Date,
+  currentStudyDay: number,
 ): CardProgress {
   const intervalBeforeReview = progress.currentIntervalDays;
   const successfulReviewCount = progress.successfulReviewCount + 1;
@@ -72,12 +80,17 @@ function applyCorrect(
     currentIntervalDays: nextIntervalDays,
     lastReviewedAt: toIsoString(reviewedAt),
     nextReviewAt: toIsoString(addDays(reviewedAt, nextIntervalDays)),
+    nextReviewStudyDay: resolveNextReviewStudyDay(
+      currentStudyDay,
+      nextIntervalDays,
+    ),
   };
 }
 
 function applyPartial(
   progress: CardProgress,
   reviewedAt: Date,
+  currentStudyDay: number,
 ): CardProgress {
   const baseInterval = Math.max(progress.currentIntervalDays, 1);
   const nextIntervalDays = Math.max(1, Math.floor(baseInterval / 2));
@@ -90,12 +103,17 @@ function applyPartial(
     currentIntervalDays: nextIntervalDays,
     lastReviewedAt: toIsoString(reviewedAt),
     nextReviewAt: toIsoString(addDays(reviewedAt, nextIntervalDays)),
+    nextReviewStudyDay: resolveNextReviewStudyDay(
+      currentStudyDay,
+      nextIntervalDays,
+    ),
   };
 }
 
 function applyIncorrect(
   progress: CardProgress,
   reviewedAt: Date,
+  currentStudyDay: number,
 ): CardProgress {
   const nextIntervalDays = 1;
 
@@ -107,6 +125,10 @@ function applyIncorrect(
     currentIntervalDays: nextIntervalDays,
     lastReviewedAt: toIsoString(reviewedAt),
     nextReviewAt: toIsoString(addDays(reviewedAt, nextIntervalDays)),
+    nextReviewStudyDay: resolveNextReviewStudyDay(
+      currentStudyDay,
+      nextIntervalDays,
+    ),
   };
 }
 
@@ -114,29 +136,27 @@ export function applyGradeToProgress(
   progress: CardProgress,
   grade: Grade,
   reviewedAt: Date,
+  currentStudyDay: number,
 ): CardProgress {
   switch (grade) {
     case "correct":
-      return applyCorrect(progress, reviewedAt);
+      return applyCorrect(progress, reviewedAt, currentStudyDay);
     case "partial":
-      return applyPartial(progress, reviewedAt);
+      return applyPartial(progress, reviewedAt, currentStudyDay);
     case "incorrect":
-      return applyIncorrect(progress, reviewedAt);
+      return applyIncorrect(progress, reviewedAt, currentStudyDay);
   }
 }
 
-export function isCardDue(progress: CardProgress, now: Date): boolean {
-  if (!progress.nextReviewAt) {
+export function isCardDue(
+  progress: CardProgress,
+  currentStudyDay: number,
+): boolean {
+  if (progress.nextReviewStudyDay === null) {
     return true;
   }
 
-  const dueAt = Date.parse(progress.nextReviewAt);
-
-  if (Number.isNaN(dueAt)) {
-    return true;
-  }
-
-  return now.getTime() >= dueAt;
+  return currentStudyDay >= progress.nextReviewStudyDay;
 }
 
 export function isCardMastered(progress: CardProgress): boolean {
@@ -145,19 +165,11 @@ export function isCardMastered(progress: CardProgress): boolean {
 
 export function getDaysUntilDue(
   progress: CardProgress,
-  now: Date,
+  currentStudyDay: number,
 ): number | null {
-  if (!progress.nextReviewAt) {
+  if (progress.nextReviewStudyDay === null) {
     return null;
   }
 
-  const dueAt = Date.parse(progress.nextReviewAt);
-
-  if (Number.isNaN(dueAt)) {
-    return null;
-  }
-
-  const diffMs = dueAt - now.getTime();
-
-  return Math.max(0, Math.ceil(diffMs / MS_PER_DAY));
+  return Math.max(0, progress.nextReviewStudyDay - currentStudyDay);
 }
