@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CourseComplete } from "@/app/components/CourseComplete";
 import { Dashboard } from "@/app/components/Dashboard";
 import { MuscleBrief } from "@/app/components/MuscleBrief";
+import { SessionComplete } from "@/app/components/SessionComplete";
 import {
   StudySession,
   type FeedbackGrade,
@@ -20,23 +21,52 @@ import {
   getCourseProfileAtIndex,
   getCourseProfiles,
   getProfileForStudyCard,
-  hasNextMuscle,
 } from "@/src/lib/course-controller";
+import { normalizeCardCategory } from "@/src/lib/card-progress-key";
+import { addRecentGrade, getCourseProgress, markMuscleIntroduced, startCourseIfNotStarted } from "@/src/lib/course-progress";
+import {
+  getDueReviewPromptCount,
+  getIntroducedMuscleCount,
+  getMasteredMuscleCount,
+} from "@/src/lib/dashboard-progress";
+import {
+  findNextGuidedMuscleIndex,
+  getGuidedDailyNewMuscleAllowance,
+  getGuidedStudyButtonLabel,
+  isMuscleGuidedComplete,
+} from "@/src/lib/guided-scheduling";
+import {
+  applyCardGrade,
+  introduceMuscleCards,
+} from "@/src/lib/mastery-engine";
+import {
+  readMasteryProgress,
+  writeMasteryProgress,
+} from "@/src/lib/mastery-progress";
+import type { QueuedCard } from "@/src/lib/review-queue";
+import {
+  buildMixedReviewQueue,
+  resolveQueuedCardToStudyCard,
+} from "@/src/lib/review-session";
+import type { Grade } from "@/src/lib/progress.types";
 import {
   getCardsForMuscleProfile,
   getModuleDisplayName,
 } from "@/src/lib/study-session";
 
-type Screen = "dashboard" | "brief" | "brief-review" | "study" | "course-complete";
+type Screen =
+  | "dashboard"
+  | "brief"
+  | "brief-review"
+  | "study"
+  | "course-complete"
+  | "mixed-review"
+  | "mixed-review-complete";
 
 type StudyCard = (typeof cards)[number];
 
 function getQuestion(category: string) {
   return `What is the ${category.toLowerCase()}?`;
-}
-
-function getEstimatedMinutes(cardCount: number) {
-  return Math.ceil((cardCount * 15) / 60);
 }
 
 function updateMastery(
@@ -46,6 +76,70 @@ function updateMastery(
   if (type === "correct") return Math.min(mastery + 1, 5);
   if (type === "incorrect") return Math.max(mastery - 1, 0);
   return mastery;
+}
+
+function persistCourseStart(courseId: string) {
+  try {
+    startCourseIfNotStarted(courseId, new Date());
+  } catch {
+    // Ignore storage failures so the course can continue.
+  }
+}
+
+function persistCourseMuscleIntroduction(courseId: string, profileId: string) {
+  try {
+    markMuscleIntroduced(courseId, profileId, new Date());
+  } catch {
+    // Ignore storage failures so guided learning can continue.
+  }
+}
+
+function persistMuscleIntroduction(profileId: string) {
+  try {
+    const store = readMasteryProgress();
+    const updatedStore = introduceMuscleCards(store, profileId);
+
+    writeMasteryProgress(updatedStore);
+  } catch {
+    // Ignore storage failures so first exposure can continue.
+  }
+}
+
+function persistCardGrade(
+  card: StudyCard,
+  course: Course | null,
+  grade: Grade,
+) {
+  try {
+    const profile = getProfileForStudyCard(card, course);
+
+    if (!profile) {
+      return;
+    }
+
+    const category = normalizeCardCategory(card.category);
+
+    if (!category) {
+      return;
+    }
+
+    const store = readMasteryProgress();
+    const updatedStore = applyCardGrade(
+      store,
+      profile.id,
+      category,
+      grade,
+      new Date(),
+    );
+
+    writeMasteryProgress(updatedStore);
+
+    if (course) {
+      addRecentGrade(course.id, grade);
+    }
+  } catch {
+    // Ignore storage failures so grading can continue.
+  }
 }
 
 export default function Home() {
@@ -68,6 +162,8 @@ export default function Home() {
   const [correctCount, setCorrectCount] = useState(0);
   const [partialCount, setPartialCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
+  const [reviewQueue, setReviewQueue] = useState<QueuedCard[]>([]);
+  const [reviewCardIndex, setReviewCardIndex] = useState(0);
 
   const selectedProfile = activeCourse
     ? getCourseProfileAtIndex(activeCourse, currentMuscleIndex)
@@ -76,7 +172,61 @@ export default function Home() {
     ? getCardsForMuscleProfile(studyCards, selectedProfile)
     : [];
   const currentCard = sessionCards[currentCardIndex];
-  const estimatedMinutes = getEstimatedMinutes(studyCards.length);
+  const dashboardCourse = getCourseById(DEFAULT_COURSE_ID);
+  const dashboardMuscleIds = dashboardCourse?.muscleProfileIds ?? [];
+  const dashboardMasteryStore = readMasteryProgress();
+  const dashboardCourseProgress = getCourseProgress(DEFAULT_COURSE_ID);
+  const dashboardNow = new Date();
+  const dueReviewPromptCount = getDueReviewPromptCount(
+    dashboardMuscleIds,
+    dashboardMasteryStore,
+    dashboardNow,
+  );
+  const introducedMuscleCount = getIntroducedMuscleCount(
+    dashboardMuscleIds,
+    dashboardCourseProgress.introducedMuscleIds,
+  );
+  const masteredMuscleCount = getMasteredMuscleCount(
+    dashboardMuscleIds,
+    dashboardMasteryStore,
+  );
+  const totalMuscleCount = dashboardMuscleIds.length;
+  const remainingNewMuscleAllowance = dashboardCourse
+    ? getGuidedDailyNewMuscleAllowance(
+        dashboardCourseProgress,
+        dashboardMuscleIds,
+        dashboardMasteryStore,
+        dashboardNow,
+      )
+    : 0;
+  const nextGuidedMuscle = dashboardCourse
+    ? findNextGuidedMuscleIndex(
+        dashboardCourse,
+        dashboardCourseProgress,
+        dashboardMasteryStore,
+        remainingNewMuscleAllowance,
+      )
+    : null;
+  const canStartGuidedStudy = nextGuidedMuscle !== null;
+  const guidedStudyLabel = getGuidedStudyButtonLabel(nextGuidedMuscle);
+  const mixedReviewQueuedCard = reviewQueue[reviewCardIndex];
+  const mixedReviewStudyCard =
+    dashboardCourse && mixedReviewQueuedCard
+      ? resolveQueuedCardToStudyCard(
+          mixedReviewQueuedCard,
+          studyCards,
+          dashboardCourse,
+        )
+      : undefined;
+  const isMixedReviewFlow =
+    screen === "mixed-review" ||
+    (screen === "brief-review" && reviewQueue.length > 0);
+  const activeStudyCard = isMixedReviewFlow ? mixedReviewStudyCard : currentCard;
+
+  function resetMixedReviewSession() {
+    setReviewQueue([]);
+    setReviewCardIndex(0);
+  }
 
   function resetMuscleSession() {
     setCurrentCardIndex(0);
@@ -94,8 +244,10 @@ export default function Home() {
     resetMuscleSession();
   }
 
-  function beginMuscle(profile: MuscleProfile) {
+  function beginMuscle(profile: MuscleProfile, course: Course) {
     resetMuscleSession();
+    persistMuscleIntroduction(profile.id);
+    persistCourseMuscleIntroduction(course.id, profile.id);
 
     if (hasViewed(profile.id)) {
       setScreen("study");
@@ -105,18 +257,86 @@ export default function Home() {
     setScreen("brief");
   }
 
+  function handleStartMixedReview() {
+    if (!dashboardCourse || dueReviewPromptCount === 0) {
+      return;
+    }
+
+    const queue = buildMixedReviewQueue(
+      dashboardMuscleIds,
+      readMasteryProgress(),
+      new Date(),
+    ).filter(
+      (queued) =>
+        resolveQueuedCardToStudyCard(queued, studyCards, dashboardCourse) !==
+        undefined,
+    );
+
+    if (queue.length === 0) {
+      return;
+    }
+
+    resetMuscleSession();
+    setReviewQueue(queue);
+    setReviewCardIndex(0);
+    setActiveCourse(dashboardCourse);
+    setScreen("mixed-review");
+  }
+
+  function advanceMixedReviewCard() {
+    setAnswerShown(false);
+    setFeedbackGrade(null);
+
+    const nextIndex = reviewCardIndex + 1;
+
+    if (nextIndex >= reviewQueue.length) {
+      setScreen("mixed-review-complete");
+      return;
+    }
+
+    setReviewCardIndex(nextIndex);
+  }
+
+  function handleFinishMixedReview() {
+    resetMixedReviewSession();
+    resetMuscleSession();
+    setActiveCourse(null);
+    setScreen("dashboard");
+  }
+
   function handleStartStudying() {
     const course = getCourseById(DEFAULT_COURSE_ID);
 
     if (!course) return;
 
-    const firstProfile = getCourseProfileAtIndex(course, 0);
+    persistCourseStart(course.id);
+    resetMixedReviewSession();
 
-    if (!firstProfile) return;
+    const courseProgress = getCourseProgress(course.id);
+    const masteryStore = readMasteryProgress();
+    const now = new Date();
+    const remainingNewAllowance = getGuidedDailyNewMuscleAllowance(
+      courseProgress,
+      course.muscleProfileIds,
+      masteryStore,
+      now,
+    );
+    const next = findNextGuidedMuscleIndex(
+      course,
+      courseProgress,
+      masteryStore,
+      remainingNewAllowance,
+    );
+
+    if (!next) return;
+
+    const profile = getCourseProfileAtIndex(course, next.index);
+
+    if (!profile) return;
 
     setActiveCourse(course);
-    setCurrentMuscleIndex(0);
-    beginMuscle(firstProfile);
+    setCurrentMuscleIndex(next.index);
+    beginMuscle(profile, course);
   }
 
   function handleStartPractice() {
@@ -143,45 +363,75 @@ export default function Home() {
   function advanceCourseAfterMuscle() {
     if (!activeCourse) return;
 
-    if (hasNextMuscle(activeCourse, currentMuscleIndex)) {
-      const nextIndex = currentMuscleIndex + 1;
-      const nextProfile = getCourseProfileAtIndex(activeCourse, nextIndex);
+    const courseProgress = getCourseProgress(activeCourse.id);
+    const masteryStore = readMasteryProgress();
+    const now = new Date();
+    const remainingNewAllowance = getGuidedDailyNewMuscleAllowance(
+      courseProgress,
+      activeCourse.muscleProfileIds,
+      masteryStore,
+      now,
+    );
+    const next = findNextGuidedMuscleIndex(
+      activeCourse,
+      courseProgress,
+      masteryStore,
+      remainingNewAllowance,
+    );
 
-      if (!nextProfile) return;
+    if (!next) {
+      const allComplete = activeCourse.muscleProfileIds.every(
+        (muscleId) =>
+          courseProgress.introducedMuscleIds.includes(muscleId) &&
+          isMuscleGuidedComplete(muscleId, masteryStore),
+      );
 
-      setCurrentMuscleIndex(nextIndex);
-      beginMuscle(nextProfile);
+      resetMuscleSession();
+
+      if (allComplete) {
+        setScreen("course-complete");
+        return;
+      }
+
+      setActiveCourse(null);
+      setScreen("dashboard");
       return;
     }
 
-    resetMuscleSession();
-    setScreen("course-complete");
+    setCurrentMuscleIndex(next.index);
+    beginMuscle(getCourseProfileAtIndex(activeCourse, next.index)!, activeCourse);
   }
 
-  function applyGrade(type: "correct" | "partial" | "incorrect") {
-    if (!currentCard) return;
-
+  function applyGrade(
+    type: "correct" | "partial" | "incorrect",
+    card: StudyCard,
+  ) {
     if (type === "correct") setCorrectCount((count) => count + 1);
     if (type === "partial") setPartialCount((count) => count + 1);
     if (type === "incorrect") setIncorrectCount((count) => count + 1);
 
-    const newMastery = updateMastery(currentCard.mastery, type);
+    const newMastery = updateMastery(card.mastery, type);
 
     setStudyCards((prev) =>
-      prev.map((card) =>
-        card.id === currentCard.id
-          ? { ...card, mastery: newMastery }
-          : card,
+      prev.map((entry) =>
+        entry.id === card.id ? { ...entry, mastery: newMastery } : entry,
       ),
     );
+
+    persistCardGrade(card, activeCourse, type);
   }
 
   function handleGrade(type: "correct" | "partial" | "incorrect") {
-    if (!currentCard || feedbackGrade !== null) return;
+    if (!activeStudyCard || feedbackGrade !== null) return;
 
-    applyGrade(type);
+    applyGrade(type, activeStudyCard);
 
     if (type === "correct") {
+      if (isMixedReviewFlow) {
+        advanceMixedReviewCard();
+        return;
+      }
+
       advanceToNextCard();
       return;
     }
@@ -192,13 +442,18 @@ export default function Home() {
   function handleContinueAfterFeedback() {
     if (!feedbackGrade) return;
 
+    if (isMixedReviewFlow) {
+      advanceMixedReviewCard();
+      return;
+    }
+
     advanceToNextCard();
   }
 
   function handleReviewBrief() {
-    if (!currentCard || !feedbackGrade) return;
+    if (!activeStudyCard || !feedbackGrade) return;
 
-    const profile = getProfileForStudyCard(currentCard, activeCourse);
+    const profile = getProfileForStudyCard(activeStudyCard, activeCourse);
 
     if (!profile) return;
 
@@ -208,23 +463,40 @@ export default function Home() {
 
   function handleReturnToPractice() {
     setReviewProfile(null);
-    setScreen("study");
+    setScreen(isMixedReviewFlow ? "mixed-review" : "study");
   }
 
   function handleReturnToDashboard() {
+    resetMixedReviewSession();
     resetCourse();
+    setScreen("dashboard");
+  }
+
+  function handleResetLearningProgress() {
+    resetProgress();
+    resetMixedReviewSession();
+    resetCourse();
+    setStudyCards(cards.map((card) => ({ ...card })));
     setScreen("dashboard");
   }
 
   return (
     <PageShell>
-      {screen === "dashboard" && (
+      {screen === "dashboard" && dashboardCourse && (
         <Dashboard
-          cardCount={studyCards.length}
-          estimatedMinutes={estimatedMinutes}
+          courseName={dashboardCourse.name}
+          dueReviewPromptCount={dueReviewPromptCount}
+          introducedMuscleCount={introducedMuscleCount}
+          masteredMuscleCount={masteredMuscleCount}
+          totalMuscleCount={totalMuscleCount}
           onStartStudying={handleStartStudying}
+          guidedStudyLabel={guidedStudyLabel}
+          canStartGuidedStudy={canStartGuidedStudy}
+          remainingNewMuscleAllowance={remainingNewMuscleAllowance}
+          onStartReview={handleStartMixedReview}
+          canStartReview={dueReviewPromptCount > 0}
           onOpenMuscleLibrary={() => router.push("/library")}
-          onResetLearningProgress={resetProgress}
+          onResetLearningProgress={handleResetLearningProgress}
         />
       )}
 
@@ -241,6 +513,34 @@ export default function Home() {
           profile={reviewProfile}
           mode="review"
           onPrimaryAction={handleReturnToPractice}
+        />
+      )}
+
+      {screen === "mixed-review" && activeStudyCard && dashboardCourse && (
+        <StudySession
+          moduleName={`${dashboardCourse.name} Review`}
+          currentIndex={reviewCardIndex}
+          totalCards={reviewQueue.length}
+          muscle={activeStudyCard.muscle}
+          question={getQuestion(activeStudyCard.category)}
+          answer={activeStudyCard.answer}
+          answerShown={answerShown}
+          feedbackGrade={feedbackGrade}
+          onShowAnswer={() => setAnswerShown(true)}
+          onGrade={handleGrade}
+          onReviewBrief={handleReviewBrief}
+          onContinue={handleContinueAfterFeedback}
+        />
+      )}
+
+      {screen === "mixed-review-complete" && (
+        <SessionComplete
+          correctCount={correctCount}
+          partialCount={partialCount}
+          incorrectCount={incorrectCount}
+          title="Review complete"
+          showStudyAgain={false}
+          onReturnToDashboard={handleFinishMixedReview}
         />
       )}
 

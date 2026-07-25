@@ -2,9 +2,17 @@ import { Button } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Card";
 
 type DashboardProps = {
-  cardCount: number;
-  estimatedMinutes: number;
+  courseName: string;
+  dueReviewPromptCount: number;
+  introducedMuscleCount: number;
+  masteredMuscleCount: number;
+  totalMuscleCount: number;
   onStartStudying: () => void;
+  guidedStudyLabel: string;
+  canStartGuidedStudy: boolean;
+  remainingNewMuscleAllowance: number;
+  onStartReview?: () => void;
+  canStartReview?: boolean;
   onOpenMuscleLibrary: () => void;
   onResetLearningProgress?: () => void;
 };
@@ -33,9 +41,17 @@ function StatItem({
 }
 
 export function Dashboard({
-  cardCount,
-  estimatedMinutes,
+  courseName,
+  dueReviewPromptCount,
+  introducedMuscleCount,
+  masteredMuscleCount,
+  totalMuscleCount,
   onStartStudying,
+  guidedStudyLabel,
+  canStartGuidedStudy,
+  remainingNewMuscleAllowance,
+  onStartReview,
+  canStartReview = false,
   onOpenMuscleLibrary,
   onResetLearningProgress,
 }: DashboardProps) {
@@ -61,26 +77,50 @@ export function Dashboard({
               Today&apos;s Study Session
             </p>
             <h2 className="text-xl font-semibold text-text-primary sm:text-2xl">
-              Cervical Muscles
+              {courseName}
             </h2>
             <p className="text-sm text-text-secondary">
-              {cardCount} cards across origin, insertion, action, and
-              innervation.
+              {totalMuscleCount} muscles in this course.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <StatItem label="New Cards" value={cardCount} highlight />
-            <StatItem label="Review Cards" value={0} />
+          <div className="grid gap-3 sm:grid-cols-2">
             <StatItem
-              label="Estimated Time"
-              value={`${estimatedMinutes} min`}
+              label="Due Review Prompts"
+              value={dueReviewPromptCount}
+              highlight
+            />
+            <StatItem
+              label="Introduced Muscles"
+              value={introducedMuscleCount}
+            />
+            <StatItem label="Mastered Muscles" value={masteredMuscleCount} />
+            <StatItem label="Total Muscles" value={totalMuscleCount} />
+            <StatItem
+              label="New Muscles Remaining Today"
+              value={remainingNewMuscleAllowance}
             />
           </div>
 
-          <Button fullWidth className="mt-1" onClick={onStartStudying}>
-            Start Studying
+          <Button
+            fullWidth
+            className="mt-1"
+            disabled={!canStartGuidedStudy}
+            onClick={onStartStudying}
+          >
+            {guidedStudyLabel}
           </Button>
+
+          {onStartReview && (
+            <Button
+              fullWidth
+              variant="secondary"
+              disabled={!canStartReview}
+              onClick={onStartReview}
+            >
+              Review Due Cards
+            </Button>
+          )}
 
           <Button fullWidth variant="secondary" onClick={onOpenMuscleLibrary}>
             Muscle Library

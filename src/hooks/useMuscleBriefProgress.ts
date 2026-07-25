@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  clearMuscleBriefProgress,
   getViewedMuscleBriefIds,
   markMuscleBriefViewed,
 } from "@/src/lib/muscle-brief-progress";
+import { clearAllLearningProgress } from "@/src/lib/learning-progress-reset";
 import { useCallback, useState } from "react";
 
 export function useMuscleBriefProgress() {
@@ -23,7 +23,7 @@ export function useMuscleBriefProgress() {
   }, []);
 
   const resetProgress = useCallback(() => {
-    clearMuscleBriefProgress();
+    clearAllLearningProgress();
     setViewedIds([]);
   }, []);
 

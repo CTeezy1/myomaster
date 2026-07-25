@@ -5,7 +5,9 @@ type SessionCompleteProps = {
   correctCount: number;
   partialCount: number;
   incorrectCount: number;
-  onStudyAgain: () => void;
+  title?: string;
+  showStudyAgain?: boolean;
+  onStudyAgain?: () => void;
   onReturnToDashboard: () => void;
 };
 
@@ -38,6 +40,8 @@ export function SessionComplete({
   correctCount,
   partialCount,
   incorrectCount,
+  title = "Nice work!",
+  showStudyAgain = true,
   onStudyAgain,
   onReturnToDashboard,
 }: SessionCompleteProps) {
@@ -51,7 +55,7 @@ export function SessionComplete({
             Session complete
           </p>
           <h2 className="text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">
-            Nice work!
+            {title}
           </h2>
           <p className="text-sm text-text-secondary sm:text-base">
             You reviewed {total} {total === 1 ? "card" : "cards"} this session.
@@ -65,9 +69,11 @@ export function SessionComplete({
         </div>
 
         <div className="flex flex-col gap-3 pt-1">
-          <Button fullWidth onClick={onStudyAgain}>
-            Study Again
-          </Button>
+          {showStudyAgain && onStudyAgain && (
+            <Button fullWidth onClick={onStudyAgain}>
+              Study Again
+            </Button>
+          )}
           <Button fullWidth variant="secondary" onClick={onReturnToDashboard}>
             Return to Dashboard
           </Button>
