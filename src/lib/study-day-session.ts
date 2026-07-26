@@ -109,9 +109,24 @@ export function buildStudyDaySession(
   masteryStore: MasteryProgressStore,
   random: () => number = Math.random,
 ): SameSessionRelearnState {
+  const queue = buildStudyDayScheduledQueueForCourse(
+    course,
+    masteryStore,
+    random,
+  );
+
+  return createSameSessionRelearnState(queue, { enforceDailyCap: true });
+}
+
+export function buildStudyDayScheduledQueueForCourse(
+  course: Course,
+  masteryStore: MasteryProgressStore,
+  random: () => number = Math.random,
+): QueuedCard[] {
   const courseProgress = getCourseProgress(course.id);
   const carriedOverRetryKeys = consumeCarriedOverRetryKeys(course.id);
-  const queue = buildStudyDayScheduledQueue(
+
+  return buildStudyDayScheduledQueue(
     course,
     {
       ...courseProgress,
@@ -121,7 +136,11 @@ export function buildStudyDaySession(
     carriedOverRetryKeys,
     random,
   );
+}
 
+export function createStudyDaySessionFromQueue(
+  queue: QueuedCard[],
+): SameSessionRelearnState {
   return createSameSessionRelearnState(queue, { enforceDailyCap: true });
 }
 

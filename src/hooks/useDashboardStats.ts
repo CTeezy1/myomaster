@@ -21,6 +21,10 @@ import {
   hasIncompleteGuidedMuscle,
 } from "@/src/lib/guided-scheduling";
 import { readMasteryProgress } from "@/src/lib/mastery-progress";
+import {
+  isResumableActiveStudySession,
+  readActiveStudySession,
+} from "@/src/lib/active-study-session";
 import type { Course } from "@/src/lib/course.types";
 
 export type DashboardStats = {
@@ -39,6 +43,7 @@ export type DashboardStats = {
   /** @internal Retained for tests; not shown on the dashboard. */
   remainingNewMuscleAllowance: number;
   canStartGuidedStudy: boolean;
+  hasResumableStudySession: boolean;
   canStartReview: boolean;
   canAdvanceStudyDay: boolean;
   isStudyDayComplete: boolean;
@@ -54,6 +59,7 @@ const DEFAULT_DASHBOARD_STATS: DashboardStats = {
   masteredMuscleCount: 0,
   remainingNewMuscleAllowance: 0,
   canStartGuidedStudy: false,
+  hasResumableStudySession: false,
   canStartReview: false,
   canAdvanceStudyDay: false,
   isStudyDayComplete: false,
@@ -95,6 +101,11 @@ export function computeDashboardStats(course: Course): DashboardStats {
     courseProgress,
     masteryStore,
   );
+  const hasResumableStudySession = isResumableActiveStudySession(
+    readActiveStudySession(),
+    course.id,
+    courseProgress,
+  );
 
   return {
     currentStudyDay,
@@ -107,7 +118,10 @@ export function computeDashboardStats(course: Course): DashboardStats {
     remainingNewMuscleAllowance,
     canStartGuidedStudy:
       !isStudyDayComplete &&
-      (workloadPlan.plannedPromptCount > 0 || hasIncomplete),
+      (hasResumableStudySession ||
+        workloadPlan.plannedPromptCount > 0 ||
+        hasIncomplete),
+    hasResumableStudySession,
     canStartReview: dueReviewPromptCount > 0,
     canAdvanceStudyDay: getCanAdvanceStudyDay(
       courseProgress,

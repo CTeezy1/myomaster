@@ -14,11 +14,9 @@ export interface QueuedCard {
   isPractice?: boolean;
 }
 
-type QueueBlock = {
-  muscleId: string;
-  cards: QueuedCard[];
-  isAttachmentPair: boolean;
-};
+export type ReviewUnit =
+  | { kind: "single"; cards: [QueuedCard] }
+  | { kind: "attachmentPair"; cards: [QueuedCard, QueuedCard] };
 
 function defaultRandom(): number {
   return Math.random();
@@ -59,7 +57,7 @@ function isUnitReviewEligible(
 function buildAttachmentPairCards(
   unit: Extract<StudyUnit, { type: "attachment-pair" }>,
   random: () => number,
-): QueuedCard[] {
+): [QueuedCard, QueuedCard] {
   const attachmentPairId = `${unit.muscleId}:attachment-pair`;
   const originCard: QueuedCard = {
     muscleId: unit.muscleId,
@@ -79,11 +77,13 @@ function buildAttachmentPairCards(
     : [insertionCard, originCard];
 }
 
-function unitToBlock(unit: StudyUnit, random: () => number): QueueBlock {
+export function studyUnitToReviewUnit(
+  unit: StudyUnit,
+  random: () => number = defaultRandom,
+): ReviewUnit {
   if (unit.type === "single") {
     return {
-      muscleId: unit.muscleId,
-      isAttachmentPair: false,
+      kind: "single",
       cards: [
         {
           muscleId: unit.muscleId,
@@ -95,14 +95,35 @@ function unitToBlock(unit: StudyUnit, random: () => number): QueueBlock {
   }
 
   return {
-    muscleId: unit.muscleId,
-    isAttachmentPair: true,
+    kind: "attachmentPair",
     cards: buildAttachmentPairCards(unit, random),
   };
 }
 
-function blocksToQueuedCards(blocks: QueueBlock[]): QueuedCard[] {
-  return blocks.flatMap((block) => block.cards);
+export function buildDueReviewUnits(
+  units: StudyUnit[],
+  progressStore: MasteryProgressStore,
+  currentStudyDay: number,
+  random: () => number = defaultRandom,
+): ReviewUnit[] {
+  return units
+    .filter(
+      (unit) =>
+        isUnitReviewEligible(unit, progressStore) &&
+        isStudyUnitDue(unit, progressStore, currentStudyDay),
+    )
+    .map((unit) => studyUnitToReviewUnit(unit, random));
+}
+
+export function shuffleReviewUnits(
+  units: ReviewUnit[],
+  random: () => number = defaultRandom,
+): ReviewUnit[] {
+  return shuffle(units, random);
+}
+
+export function flattenReviewUnits(units: ReviewUnit[]): QueuedCard[] {
+  return units.flatMap((unit) => unit.cards);
 }
 
 export function buildReviewQueue(
@@ -111,20 +132,18 @@ export function buildReviewQueue(
   currentStudyDay: number,
   random: () => number = defaultRandom,
 ): QueuedCard[] {
-  const eligibleUnits = units.filter(
-    (unit) =>
-      isUnitReviewEligible(unit, progressStore) &&
-      isStudyUnitDue(unit, progressStore, currentStudyDay),
+  const reviewUnits = buildDueReviewUnits(
+    units,
+    progressStore,
+    currentStudyDay,
+    random,
   );
 
-  if (eligibleUnits.length === 0) {
+  if (reviewUnits.length === 0) {
     return [];
   }
 
-  const blocks = eligibleUnits.map((unit) => unitToBlock(unit, random));
-  const shuffledBlocks = shuffle(blocks, random);
-
-  return blocksToQueuedCards(shuffledBlocks);
+  return flattenReviewUnits(shuffleReviewUnits(reviewUnits, random));
 }
 
 export function buildReviewQueueFromUnits(
@@ -135,10 +154,9 @@ export function buildReviewQueueFromUnits(
     return [];
   }
 
-  const blocks = units.map((unit) => unitToBlock(unit, random));
-  const shuffledBlocks = shuffle(blocks, random);
+  const reviewUnits = units.map((unit) => studyUnitToReviewUnit(unit, random));
 
-  return blocksToQueuedCards(shuffledBlocks);
+  return flattenReviewUnits(shuffleReviewUnits(reviewUnits, random));
 }
 
 export { isUnitReviewEligible, shuffle as shuffleQueueBlocks };

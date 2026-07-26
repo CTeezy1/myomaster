@@ -12,6 +12,7 @@ import { useDashboardStats } from "@/src/hooks/useDashboardStats";
 import { useMuscleBriefProgress } from "@/src/hooks/useMuscleBriefProgress";
 import { DEFAULT_COURSE_ID } from "@/src/config/study-flow";
 import { cards } from "@/src/data/cards";
+import { getMuscleProfileById } from "@/src/data/muscle-profiles";
 import type { MuscleProfile } from "@/src/data/muscle-profile.types";
 import type { Course } from "@/src/lib/course.types";
 import {
@@ -33,6 +34,16 @@ import {
   setCarriedOverRetryKeys,
   startCourseIfNotStarted,
 } from "@/src/lib/course-progress";
+import {
+  clearActiveStudySession,
+  createPersistedActiveStudySession,
+  getPlannedStaticQueueFromSession,
+  isResumableActiveStudySession,
+  readActiveStudySession,
+  writeActiveStudySession,
+  type ActiveStudyScreen,
+  type PersistedActiveStudySession,
+} from "@/src/lib/active-study-session";
 import { planDailyWorkload } from "@/src/lib/daily-workload-planning";
 import {
   applyCardGrade,
@@ -55,7 +66,8 @@ import {
   type SameSessionRelearnState,
 } from "@/src/lib/same-session-relearn";
 import {
-  buildStudyDaySession,
+  buildStudyDayScheduledQueueForCourse,
+  createStudyDaySessionFromQueue,
   getBriefMuscleIdForSessionIndex,
   getNewMuscleIdsForStudyDay,
   isStudyDaySessionComplete,
@@ -69,7 +81,16 @@ import {
   setCardFeedbackGrade,
   showCardAnswer,
   type CardFeedbackGrade,
+  type CardFeedbackState,
 } from "@/src/lib/quiz-card-state";
+
+function getPersistableStudyScreen(screen: Screen): ActiveStudyScreen | null {
+  if (screen === "brief" || screen === "study-day" || screen === "brief-review") {
+    return screen;
+  }
+
+  return null;
+}
 
 type Screen =
   | "dashboard"
@@ -196,10 +217,13 @@ export default function Home() {
     dueReviewPromptCount,
     introducedMuscleCount,
     canStartGuidedStudy,
+    hasResumableStudySession,
     isStudyDayComplete,
     canAdvanceStudyDay,
     refreshDashboardStats,
   } = useDashboardStats(screen === "dashboard");
+  const plannedStaticQueueRef = useRef<QueuedCard[]>([]);
+  const hasRestoredSessionRef = useRef(false);
 
   const selectedProfile = activeCourse
     ? getCourseProfileAtIndex(activeCourse, currentMuscleIndex)
@@ -250,6 +274,143 @@ export default function Home() {
   const isMixedReviewFlow =
     screen === "mixed-review" ||
     (screen === "brief-review" && reviewSession !== null);
+
+  function restoreStudySessionFromPersistence(
+    persisted: PersistedActiveStudySession,
+    course: Course,
+  ) {
+    plannedStaticQueueRef.current = persisted.plannedStaticQueue.map((card) => ({
+      ...card,
+    }));
+    setStudyDaySession({
+      ...persisted.session,
+      queue: persisted.session.queue.map((card) => ({ ...card })),
+      unresolvedKeys: [...persisted.session.unresolvedKeys],
+      pairCorrectCounts: { ...persisted.session.pairCorrectCounts },
+    });
+    setActiveCourse(course);
+    setCurrentMuscleIndex(persisted.currentMuscleIndex);
+    setCardFeedback({ ...persisted.cardFeedback });
+    setFeedbackQueuedCard(
+      persisted.feedbackQueuedCard ? { ...persisted.feedbackQueuedCard } : null,
+    );
+    setFeedbackPresentationKey(persisted.feedbackPresentationKey);
+    lastSyncedPresentationKeyRef.current =
+      persisted.feedbackPresentationKey ??
+      (persisted.screen === "study-day"
+        ? getCardPresentationKey({
+            cardKey:
+              persisted.session.queue[persisted.session.index]?.cardKey ??
+              "restored",
+            sessionIndex: persisted.session.index,
+            isPendingRetry:
+              persisted.session.queue[persisted.session.index]?.isPendingRetry,
+            presentationSequence: persisted.session.gradedPromptCount,
+          })
+        : null);
+
+    if (persisted.reviewProfileId) {
+      setReviewProfile(getMuscleProfileById(persisted.reviewProfileId) ?? null);
+    } else {
+      setReviewProfile(null);
+    }
+
+    setScreen(persisted.screen);
+  }
+
+  function persistActiveStudySessionState(
+    overrides: Partial<{
+      session: SameSessionRelearnState;
+      screen: Screen;
+      currentMuscleIndex: number;
+      cardFeedback: CardFeedbackState;
+      feedbackQueuedCard: QueuedCard | null;
+      feedbackPresentationKey: string | null;
+      reviewProfile: MuscleProfile | null;
+    }> = {},
+  ) {
+    const session = overrides.session ?? studyDaySession;
+    const course = activeCourse;
+
+    if (!session || !course) {
+      return;
+    }
+
+    const persistableScreen = getPersistableStudyScreen(
+      overrides.screen ?? screen,
+    );
+
+    if (!persistableScreen) {
+      return;
+    }
+
+    if (isStudyDaySessionComplete(session)) {
+      clearActiveStudySession();
+      return;
+    }
+
+    const courseProgress = getCourseProgress(course.id);
+
+    writeActiveStudySession(
+      createPersistedActiveStudySession({
+        courseId: course.id,
+        studyDay: getCurrentStudyDay(courseProgress),
+        plannedStaticQueue: plannedStaticQueueRef.current,
+        session,
+        screen: persistableScreen,
+        currentMuscleIndex: overrides.currentMuscleIndex ?? currentMuscleIndex,
+        cardFeedback: overrides.cardFeedback ?? cardFeedback,
+        feedbackQueuedCard:
+          overrides.feedbackQueuedCard ?? feedbackQueuedCard,
+        feedbackPresentationKey:
+          overrides.feedbackPresentationKey ?? feedbackPresentationKey,
+        reviewProfileId: (overrides.reviewProfile ?? reviewProfile)?.id ?? null,
+      }),
+    );
+  }
+
+  useEffect(() => {
+    if (hasRestoredSessionRef.current) {
+      return;
+    }
+
+    const course = getCourseById(DEFAULT_COURSE_ID);
+
+    if (!course) {
+      return;
+    }
+
+    const courseProgress = getCourseProgress(course.id);
+    const persisted = readActiveStudySession();
+
+    if (!isResumableActiveStudySession(persisted, course.id, courseProgress)) {
+      if (persisted) {
+        clearActiveStudySession();
+      }
+
+      return;
+    }
+
+    hasRestoredSessionRef.current = true;
+    restoreStudySessionFromPersistence(persisted, course);
+  }, []);
+
+  useEffect(() => {
+    if (!studyDaySession || !activeCourse) {
+      return;
+    }
+
+    persistActiveStudySessionState();
+  }, [
+    studyDaySession,
+    activeCourse,
+    screen,
+    cardFeedback,
+    feedbackQueuedCard,
+    feedbackPresentationKey,
+    currentMuscleIndex,
+    reviewProfile,
+  ]);
 
   function resetSessionStats() {
     setCardFeedback(createInitialCardFeedbackState());
@@ -348,6 +509,7 @@ export default function Home() {
 
     resetStudyDaySession();
     resetSessionStats();
+    clearActiveStudySession();
     setActiveCourse(null);
     refreshDashboardStats();
   }
@@ -406,24 +568,34 @@ export default function Home() {
       return;
     }
 
-    const masteryStore = readMasteryProgress();
-    const workloadPlan = planDailyWorkload(
-      course,
-      courseProgress,
-      masteryStore,
-    );
+    const persisted = readActiveStudySession();
 
-    if (workloadPlan.queue.length === 0) {
+    if (isResumableActiveStudySession(persisted, course.id, courseProgress)) {
+      hasRestoredSessionRef.current = true;
+      restoreStudySessionFromPersistence(persisted, course);
       return;
     }
 
-    introduceNewMusclesForSession(course, workloadPlan.newMuscleAllowance);
-    resetSessionStats();
-    const session = buildStudyDaySession(
+    clearActiveStudySession();
+
+    const masteryStore = readMasteryProgress();
+    const scheduledQueue = buildStudyDayScheduledQueueForCourse(
       course,
-      courseProgress,
       masteryStore,
     );
+
+    if (scheduledQueue.length === 0) {
+      return;
+    }
+
+    const workloadPlan = planDailyWorkload(course, courseProgress, masteryStore);
+
+    introduceNewMusclesForSession(course, workloadPlan.newMuscleAllowance);
+    resetSessionStats();
+
+    const session = createStudyDaySessionFromQueue(scheduledQueue);
+    plannedStaticQueueRef.current = getPlannedStaticQueueFromSession(session);
+
     setStudyDaySession(session);
     setActiveCourse(course);
     proceedToSessionCard(session, course);
@@ -483,6 +655,7 @@ export default function Home() {
       }
 
       setStudyDaySession(session);
+      clearActiveStudySession();
 
       if (session.dailyCapReached) {
         setScreen("study-day-complete");
@@ -566,6 +739,10 @@ export default function Home() {
   }
 
   function handleReturnToDashboard() {
+    if (studyDaySession && activeCourse && getPersistableStudyScreen(screen)) {
+      persistActiveStudySessionState();
+    }
+
     resetReviewSession();
     resetStudyDaySession();
     resetCourse();
@@ -601,10 +778,12 @@ export default function Home() {
           totalMuscleCount={totalMuscleCount}
           onStartStudying={handleStartStudying}
           canStartGuidedStudy={canStartGuidedStudy}
+          hasResumableStudySession={hasResumableStudySession}
           isStudyDayComplete={isStudyDayComplete}
           canAdvanceStudyDay={canAdvanceStudyDay}
           onAdvanceStudyDay={handleAdvanceStudyDay}
           onOpenMuscleLibrary={() => router.push("/library")}
+          onOpenMemoryCode={() => router.push("/memory-code")}
           onResetLearningProgress={handleResetLearningProgress}
         />
       )}

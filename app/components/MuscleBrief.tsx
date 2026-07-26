@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 
 export type MuscleBriefProps = {
@@ -289,12 +290,20 @@ export function MuscleBrief({
             variant="anatomy"
           />
           <CoreFactsPanel profile={profile} />
-          <BriefImagePanel
-            title="Memory Illustration"
-            src={profile.images.memory}
-            alt={`${profile.name} memory illustration`}
-            variant="memory"
-          />
+          <div className="flex flex-col gap-3">
+            <BriefImagePanel
+              title="Memory Illustration"
+              src={profile.images.memory}
+              alt={`${profile.name} memory illustration`}
+              variant="memory"
+            />
+            <Link
+              href="/memory-code"
+              className="text-sm font-medium text-brand-700 underline-offset-2 transition-colors hover:text-brand-800 hover:underline"
+            >
+              View the Memory Code →
+            </Link>
+          </div>
           <Card className="flex h-full flex-col p-4 sm:p-5 lg:p-6">
             <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               Memory Story

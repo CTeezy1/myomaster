@@ -54,7 +54,13 @@ import type {
   CardProgress,
   MasteryProgressStore,
 } from "@/src/lib/progress.types";
-import { buildReviewQueue, type QueuedCard } from "@/src/lib/review-queue";
+import {
+  buildDueReviewUnits,
+  buildReviewQueue,
+  flattenReviewUnits,
+  shuffleReviewUnits,
+  type QueuedCard,
+} from "@/src/lib/review-queue";
 import {
   buildNewMuscleQueuedCards,
   buildStudyDayScheduledQueue,
@@ -404,6 +410,72 @@ describe("review queue", () => {
     const muscleBlocks = getQueueMuscleBlocks(queue);
 
     expect(muscleBlocks.sort()).toEqual([...muscles].sort());
+  });
+
+  it("does not emit due cards from one muscle in source order", () => {
+    const muscleId = "sternocleidomastoid";
+    let store = emptyStore();
+
+    for (const category of ["origin", "insertion", "action", "innervation"] as const) {
+      store = applyCardGrade(store, muscleId, category, "correct", reviewedAt, 6);
+    }
+
+    const units = buildStudyUnitsForMuscle(muscleId);
+    const unshuffledQueue = flattenReviewUnits(
+      buildDueReviewUnits(units, store, 7, () => 0),
+    );
+    const shuffledQueue = buildReviewQueue(units, store, 7, () => 0);
+
+    expect(unshuffledQueue.map((card) => card.cardKey)).toEqual([
+      "sternocleidomastoid:origin",
+      "sternocleidomastoid:insertion",
+      "sternocleidomastoid:action",
+      "sternocleidomastoid:innervation",
+    ]);
+    expect(shuffledQueue.map((card) => card.cardKey)).not.toEqual(
+      unshuffledQueue.map((card) => card.cardKey),
+    );
+  });
+
+  it("passes due review units through the shuffle step", () => {
+    const muscles = ["longus-colli", "longus-capitis"];
+    let store = emptyStore();
+
+    for (const muscleId of muscles) {
+      store = applyCardGrade(store, muscleId, "action", "correct", reviewedAt, 1);
+    }
+
+    const units = muscles.flatMap((muscleId) => buildStudyUnitsForMuscle(muscleId));
+    const reviewUnits = buildDueReviewUnits(units, store, dueStudyDay, () => 0.5);
+    const shuffledUnits = shuffleReviewUnits(reviewUnits, () => 0);
+    const queue = flattenReviewUnits(shuffledUnits);
+
+    expect(reviewUnits.map((unit) => unit.cards[0].muscleId)).toEqual(muscles);
+    expect(getQueueMuscleBlocks(queue)).toEqual(["longus-capitis", "longus-colli"]);
+  });
+
+  it("interleaves due reviews from multiple muscles", () => {
+    const muscles = ["longus-colli", "longus-capitis", "sternocleidomastoid"];
+    let store = emptyStore();
+
+    for (const muscleId of muscles) {
+      for (const category of ["origin", "insertion", "action", "innervation"] as const) {
+        store = applyCardGrade(store, muscleId, category, "correct", reviewedAt, 1);
+      }
+    }
+
+    const units = muscles.flatMap((muscleId) => buildStudyUnitsForMuscle(muscleId));
+    const groupedByMuscleOrder = muscles.flatMap((muscleId) =>
+      buildReviewQueue(buildStudyUnitsForMuscle(muscleId), store, dueStudyDay, () => 0.5),
+    );
+    const queue = buildReviewQueue(units, store, dueStudyDay, () => 0);
+    const muscleBlocks = getQueueMuscleBlocks(queue);
+
+    expect(muscleBlocks.length).toBe(9);
+    expect(new Set(muscleBlocks).size).toBe(3);
+    expect(queue.map((card) => card.cardKey)).not.toEqual(
+      groupedByMuscleOrder.map((card) => card.cardKey),
+    );
   });
 });
 

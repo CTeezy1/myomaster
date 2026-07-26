@@ -8,10 +8,12 @@ type DashboardProps = {
   totalMuscleCount: number;
   onStartStudying: () => void;
   canStartGuidedStudy: boolean;
+  hasResumableStudySession: boolean;
   isStudyDayComplete: boolean;
   canAdvanceStudyDay: boolean;
   onAdvanceStudyDay?: () => void;
   onOpenMuscleLibrary: () => void;
+  onOpenMemoryCode: () => void;
   onResetLearningProgress?: () => void;
 };
 
@@ -39,10 +41,12 @@ export function Dashboard({
   totalMuscleCount,
   onStartStudying,
   canStartGuidedStudy,
+  hasResumableStudySession,
   isStudyDayComplete,
   canAdvanceStudyDay,
   onAdvanceStudyDay,
   onOpenMuscleLibrary,
+  onOpenMemoryCode,
   onResetLearningProgress,
 }: DashboardProps) {
   return (
@@ -82,7 +86,7 @@ export function Dashboard({
               disabled={!canStartGuidedStudy}
               onClick={onStartStudying}
             >
-              Begin Studying
+              {hasResumableStudySession ? "Resume Studying" : "Begin Studying"}
             </Button>
           )}
 
@@ -99,6 +103,10 @@ export function Dashboard({
 
           <Button fullWidth variant="secondary" onClick={onOpenMuscleLibrary}>
             Muscle Library
+          </Button>
+
+          <Button fullWidth variant="secondary" onClick={onOpenMemoryCode}>
+            Memory Code
           </Button>
         </div>
       </Card>
