@@ -125,8 +125,8 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     order: 6,
     description: "Deep head extensors and rotators",
     coreFacts: {
-      origin: "C1-C2/occiput",
-      insertion: "Occiput/C1-C2",
+      origin: "C1-C2",
+      insertion: "Occiput-C1",
       action: "Head extension, ipsilateral rotation",
       innervation: "Suboccipital nerve C1",
     },
