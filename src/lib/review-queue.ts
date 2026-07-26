@@ -11,6 +11,7 @@ export interface QueuedCard {
   category: CardCategory;
   attachmentPairId?: string;
   isPendingRetry?: boolean;
+  isPractice?: boolean;
 }
 
 type QueueBlock = {
@@ -100,58 +101,8 @@ function unitToBlock(unit: StudyUnit, random: () => number): QueueBlock {
   };
 }
 
-function hasAlternativeMuscleBlock(
-  remaining: QueueBlock[],
-  excluded: QueueBlock,
-  muscleId: string,
-): boolean {
-  return remaining.some(
-    (block) => block !== excluded && block.muscleId !== muscleId,
-  );
-}
-
-function canPlaceBlock(
-  block: QueueBlock,
-  previous: QueueBlock | null,
-  remaining: QueueBlock[],
-): boolean {
-  if (!previous) {
-    return true;
-  }
-
-  if (block.muscleId !== previous.muscleId) {
-    return true;
-  }
-
-  return !hasAlternativeMuscleBlock(remaining, block, previous.muscleId);
-}
-
-function arrangeBlocks(
-  blocks: QueueBlock[],
-  random: () => number,
-): QueueBlock[] {
-  if (blocks.length <= 1) {
-    return blocks;
-  }
-
-  const remaining = shuffle(blocks, random);
-  const arranged: QueueBlock[] = [];
-
-  while (remaining.length > 0) {
-    const previous = arranged[arranged.length - 1] ?? null;
-    const candidates = remaining.filter((block) =>
-      canPlaceBlock(block, previous, remaining),
-    );
-
-    const pool = candidates.length > 0 ? candidates : remaining;
-    const selectedIndex = Math.floor(random() * pool.length);
-    const selected = pool[selectedIndex];
-
-    arranged.push(selected);
-    remaining.splice(remaining.indexOf(selected), 1);
-  }
-
-  return arranged;
+function blocksToQueuedCards(blocks: QueueBlock[]): QueuedCard[] {
+  return blocks.flatMap((block) => block.cards);
 }
 
 export function buildReviewQueue(
@@ -171,9 +122,9 @@ export function buildReviewQueue(
   }
 
   const blocks = eligibleUnits.map((unit) => unitToBlock(unit, random));
-  const arrangedBlocks = arrangeBlocks(blocks, random);
+  const shuffledBlocks = shuffle(blocks, random);
 
-  return arrangedBlocks.flatMap((block) => block.cards);
+  return blocksToQueuedCards(shuffledBlocks);
 }
 
 export function buildReviewQueueFromUnits(
@@ -185,9 +136,9 @@ export function buildReviewQueueFromUnits(
   }
 
   const blocks = units.map((unit) => unitToBlock(unit, random));
-  const arrangedBlocks = arrangeBlocks(blocks, random);
+  const shuffledBlocks = shuffle(blocks, random);
 
-  return arrangedBlocks.flatMap((block) => block.cards);
+  return blocksToQueuedCards(shuffledBlocks);
 }
 
-export { isUnitReviewEligible };
+export { isUnitReviewEligible, shuffle as shuffleQueueBlocks };

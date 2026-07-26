@@ -12,9 +12,11 @@ export type SameSessionRelearnState = {
   queue: QueuedCard[];
   index: number;
   gradedPromptCount: number;
+  staticGradedCount: number;
   unresolvedKeys: CardProgressKey[];
   pairCorrectCounts: Record<string, number>;
   initialQueueLength: number;
+  initialStaticQueueLength: number;
   dailyCapReached: boolean;
   enforceDailyCap: boolean;
 };
@@ -23,13 +25,17 @@ export function createSameSessionRelearnState(
   queue: QueuedCard[],
   options: { enforceDailyCap?: boolean } = {},
 ): SameSessionRelearnState {
+  const initialStaticQueueLength = countNonRetryCards(queue);
+
   return {
     queue,
     index: 0,
     gradedPromptCount: 0,
+    staticGradedCount: 0,
     unresolvedKeys: [],
     pairCorrectCounts: {},
     initialQueueLength: queue.length,
+    initialStaticQueueLength,
     dailyCapReached: false,
     enforceDailyCap: options.enforceDailyCap ?? false,
   };
@@ -217,23 +223,26 @@ export function areAttachmentPairsAdjacent(queue: QueuedCard[]): boolean {
   return true;
 }
 
-function shouldAppendRetry(state: SameSessionRelearnState): boolean {
-  if (!state.enforceDailyCap) {
-    return true;
-  }
-
-  return !state.dailyCapReached;
+function shouldAppendRetry(_state: SameSessionRelearnState): boolean {
+  return true;
 }
 
 function applyCapAfterGrade(
   state: SameSessionRelearnState,
-  nextGradedPromptCount: number,
-): Pick<SameSessionRelearnState, "gradedPromptCount" | "dailyCapReached"> {
+  gradedCard: QueuedCard,
+): Pick<
+  SameSessionRelearnState,
+  "gradedPromptCount" | "staticGradedCount" | "dailyCapReached"
+> {
+  const gradedPromptCount = state.gradedPromptCount + 1;
+  const staticGradedCount =
+    state.staticGradedCount + (gradedCard.isPendingRetry ? 0 : 1);
   const dailyCapReached =
-    state.enforceDailyCap && nextGradedPromptCount >= DAILY_GRADED_PROMPT_CAP;
+    state.enforceDailyCap && staticGradedCount >= DAILY_GRADED_PROMPT_CAP;
 
   return {
-    gradedPromptCount: nextGradedPromptCount,
+    gradedPromptCount,
+    staticGradedCount,
     dailyCapReached,
   };
 }
@@ -280,6 +289,21 @@ function handleCorrectGrade(
   };
 }
 
+function resolveIndexAfterMissedRetry(
+  state: SameSessionRelearnState,
+  queue: QueuedCard[],
+  gradedCard: QueuedCard,
+  retryCardCount: number,
+): number {
+  if (!gradedCard.isPendingRetry || retryCardCount <= 0) {
+    return state.index;
+  }
+
+  const retryStartIndex = queue.length - retryCardCount;
+
+  return Math.max(0, retryStartIndex - 1);
+}
+
 function handleMissedGrade(
   state: SameSessionRelearnState,
   gradedCard: QueuedCard,
@@ -297,6 +321,12 @@ function handleMissedGrade(
     return {
       ...state,
       queue,
+      index: resolveIndexAfterMissedRetry(
+        state,
+        queue,
+        gradedCard,
+        retryCards.length,
+      ),
       unresolvedKeys: addUnresolvedKeys(
         state.unresolvedKeys,
         retryCards.map((card) => card.cardKey),
@@ -313,14 +343,21 @@ function handleMissedGrade(
     ...gradedCard,
     isPendingRetry: true,
   };
+  const retryCards = [retryCard];
 
   if (shouldAppendRetry(state)) {
-    queue = appendPendingRetryAtEnd(queue, [retryCard]);
+    queue = appendPendingRetryAtEnd(queue, retryCards);
   }
 
   return {
     ...state,
     queue,
+    index: resolveIndexAfterMissedRetry(
+      state,
+      queue,
+      gradedCard,
+      retryCards.length,
+    ),
     unresolvedKeys: addUnresolvedKeys(state.unresolvedKeys, [gradedCard.cardKey]),
   };
 }
@@ -331,7 +368,7 @@ export function applySameSessionGrade(
   grade: Grade,
   random: () => number = Math.random,
 ): SameSessionRelearnState {
-  const capUpdate = applyCapAfterGrade(state, state.gradedPromptCount + 1);
+  const capUpdate = applyCapAfterGrade(state, gradedCard);
   let nextState: SameSessionRelearnState = {
     ...state,
     ...capUpdate,
@@ -347,10 +384,6 @@ export function applySameSessionGrade(
 export function advanceSameSessionIndex(
   state: SameSessionRelearnState,
 ): SameSessionRelearnState {
-  if (state.dailyCapReached) {
-    return state;
-  }
-
   return {
     ...state,
     index: state.index + 1,
@@ -360,22 +393,20 @@ export function advanceSameSessionIndex(
 export function isSameSessionRelearnComplete(
   state: SameSessionRelearnState,
 ): boolean {
-  if (state.dailyCapReached) {
+  if (state.unresolvedKeys.length > 0) {
+    return false;
+  }
+
+  if (state.enforceDailyCap && state.dailyCapReached) {
     return true;
   }
 
-  return (
-    state.index >= state.queue.length && state.unresolvedKeys.length === 0
-  );
+  return state.index >= state.queue.length;
 }
 
 export function getCurrentSessionCard(
   state: SameSessionRelearnState,
 ): QueuedCard | null {
-  if (state.dailyCapReached) {
-    return null;
-  }
-
   return state.queue[state.index] ?? null;
 }
 

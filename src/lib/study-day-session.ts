@@ -1,6 +1,6 @@
 import type { CardProgressKey } from "@/src/lib/card-progress-key";
 import type { Course } from "@/src/lib/course.types";
-import { consumeCarriedOverRetryKeys } from "@/src/lib/course-progress";
+import { consumeCarriedOverRetryKeys, getCourseProgress, isCurrentStudyDayCompleted } from "@/src/lib/course-progress";
 import { planDailyWorkload } from "@/src/lib/daily-workload-planning";
 import type { CourseProgress, MasteryProgressStore } from "@/src/lib/progress.types";
 import { hasViewedMuscleBrief } from "@/src/lib/muscle-brief-progress";
@@ -8,6 +8,7 @@ import type { QueuedCard } from "@/src/lib/review-queue";
 import {
   buildCarriedOverRetryQueue,
   createSameSessionRelearnState,
+  isSameSessionRelearnComplete,
   type SameSessionRelearnState,
 } from "@/src/lib/same-session-relearn";
 
@@ -50,7 +51,7 @@ function mergeCarriedOverQueueWithPlan(
     (card) => !carriedKeySet.has(card.cardKey),
   );
 
-  return [...carriedQueue, ...filteredPlanned];
+  return [...filteredPlanned, ...carriedQueue];
 }
 
 export function buildStudyDayScheduledQueue(
@@ -60,6 +61,10 @@ export function buildStudyDayScheduledQueue(
   carriedOverRetryKeys: CardProgressKey[] = courseProgress.carriedOverRetryKeys,
   random: () => number = Math.random,
 ): QueuedCard[] {
+  if (isCurrentStudyDayCompleted(courseProgress)) {
+    return [];
+  }
+
   const carriedQueue = buildCarriedOverRetryQueue(carriedOverRetryKeys, random);
   const plannedQueue = planDailyWorkload(
     course,
@@ -100,10 +105,11 @@ export function getBriefMuscleIdForSessionIndex(
 
 export function buildStudyDaySession(
   course: Course,
-  courseProgress: CourseProgress,
+  _courseProgress: CourseProgress,
   masteryStore: MasteryProgressStore,
   random: () => number = Math.random,
 ): SameSessionRelearnState {
+  const courseProgress = getCourseProgress(course.id);
   const carriedOverRetryKeys = consumeCarriedOverRetryKeys(course.id);
   const queue = buildStudyDayScheduledQueue(
     course,
@@ -122,11 +128,7 @@ export function buildStudyDaySession(
 export function isStudyDaySessionComplete(
   state: SameSessionRelearnState,
 ): boolean {
-  if (state.dailyCapReached) {
-    return true;
-  }
-
-  return state.index >= state.queue.length && state.unresolvedKeys.length === 0;
+  return isSameSessionRelearnComplete(state);
 }
 
 export function countUniquePrompts(state: SameSessionRelearnState): number {

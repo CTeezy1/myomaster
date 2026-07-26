@@ -4,6 +4,10 @@ import {
   type CardCategory,
   type CardProgressKey,
 } from "@/src/lib/card-progress-key";
+import {
+  masteryStoreNeedsMuscleIdMigration,
+  migrateMasteryProgressStore,
+} from "@/src/lib/muscle-id-migration";
 import type {
   CardProgress,
   CreateDefaultCardProgressInput,
@@ -182,7 +186,14 @@ function readStore(): MasteryProgressStore {
       return createEmptyStore();
     }
 
-    return parseMasteryProgressStore(JSON.parse(raw));
+    const parsed = parseMasteryProgressStore(JSON.parse(raw));
+    const migrated = migrateMasteryProgressStore(parsed);
+
+    if (masteryStoreNeedsMuscleIdMigration(parsed)) {
+      writeStore(migrated);
+    }
+
+    return migrated;
   } catch {
     return createEmptyStore();
   }

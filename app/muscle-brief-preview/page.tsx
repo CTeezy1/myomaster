@@ -1,6 +1,6 @@
 "use client";
 
-import { MuscleBrief } from "@/app/components/MuscleBrief";
+import { MuscleBriefScreen } from "@/app/components/MuscleBriefScreen";
 import { PageShell } from "@/app/components/ui/PageShell";
 import { getMuscleProfileById } from "@/src/data/muscle-profiles";
 
@@ -17,7 +17,11 @@ export default function MuscleBriefPreviewPage() {
 
   return (
     <PageShell>
-      <MuscleBrief profile={profile} mode="course" onPrimaryAction={() => {}} />
+      <MuscleBriefScreen
+        profile={profile}
+        mode="course"
+        onPrimaryAction={() => {}}
+      />
     </PageShell>
   );
 }

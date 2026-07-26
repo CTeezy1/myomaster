@@ -9,7 +9,15 @@ import type {
   Grade,
   MasteryProgressStore,
 } from "@/src/lib/progress.types";
-import { applyGradeToProgress } from "@/src/lib/scheduling";
+import {
+  applyGradeToProgress,
+  applyPracticeCorrect,
+  applyPracticePartial,
+} from "@/src/lib/scheduling";
+
+export type ApplyCardGradeOptions = {
+  isPractice?: boolean;
+};
 
 function getOrCreateCardProgress(
   store: MasteryProgressStore,
@@ -70,6 +78,22 @@ export function introduceMuscleCards(
   };
 }
 
+function applyPracticeGrade(
+  progress: ReturnType<typeof createDefaultCardProgress>,
+  grade: Grade,
+  reviewedAt: Date,
+  currentStudyDay: number,
+): ReturnType<typeof createDefaultCardProgress> {
+  switch (grade) {
+    case "correct":
+      return applyPracticeCorrect(progress, reviewedAt);
+    case "partial":
+      return applyPracticePartial(progress, reviewedAt);
+    case "incorrect":
+      return applyGradeToProgress(progress, "incorrect", reviewedAt, currentStudyDay);
+  }
+}
+
 export function applyCardGrade(
   store: MasteryProgressStore,
   muscleId: string,
@@ -77,6 +101,7 @@ export function applyCardGrade(
   grade: Grade,
   reviewedAt: Date,
   currentStudyDay: number,
+  options: ApplyCardGradeOptions = {},
 ): MasteryProgressStore {
   const entry = getOrCreateCardProgress(store, muscleId, category);
 
@@ -84,12 +109,14 @@ export function applyCardGrade(
     return store;
   }
 
-  const updatedProgress = applyGradeToProgress(
-    entry.progress,
-    grade,
-    reviewedAt,
-    currentStudyDay,
-  );
+  const updatedProgress = options.isPractice
+    ? applyPracticeGrade(entry.progress, grade, reviewedAt, currentStudyDay)
+    : applyGradeToProgress(
+        entry.progress,
+        grade,
+        reviewedAt,
+        currentStudyDay,
+      );
 
   return {
     ...store,

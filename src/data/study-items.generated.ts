@@ -126,7 +126,7 @@ export const muscles: Muscle[] = [
   },
   {
     region: "shoulder",
-    Muscle: "Caracobrachialis",
+    Muscle: "Coracobrachialis",
     Origin: "Coracoid Process",
     Insertion: "Anteromedial surface of humerus",
     Action: "Shoulder flexion/adduction",
@@ -150,7 +150,7 @@ export const muscles: Muscle[] = [
   },
   {
     region: "shoulder",
-    Muscle: "Pectoral minor",
+    Muscle: "Pectoralis minor",
     Origin: "Sternal end of ribs 3-5",
     Insertion: "Coracoid Process",
     Action: "Stabilizes scapula, scapular protraction/depression",
@@ -1146,7 +1146,7 @@ export const cards: Card[] = [
   {
     id: 53,
     region: "shoulder",
-    muscle: "Caracobrachialis",
+    muscle: "Coracobrachialis",
     category: "Origin",
     answer: "Coracoid Process",
     mastery: 0,
@@ -1154,7 +1154,7 @@ export const cards: Card[] = [
   {
     id: 54,
     region: "shoulder",
-    muscle: "Caracobrachialis",
+    muscle: "Coracobrachialis",
     category: "Insertion",
     answer: "Anteromedial surface of humerus",
     mastery: 0,
@@ -1162,7 +1162,7 @@ export const cards: Card[] = [
   {
     id: 55,
     region: "shoulder",
-    muscle: "Caracobrachialis",
+    muscle: "Coracobrachialis",
     category: "Action",
     answer: "Shoulder flexion/adduction",
     mastery: 0,
@@ -1170,7 +1170,7 @@ export const cards: Card[] = [
   {
     id: 56,
     region: "shoulder",
-    muscle: "Caracobrachialis",
+    muscle: "Coracobrachialis",
     category: "Innervation",
     answer: "Musculocutaneous nerve (C5-C7)",
     mastery: 0,
@@ -1242,7 +1242,7 @@ export const cards: Card[] = [
   {
     id: 65,
     region: "shoulder",
-    muscle: "Pectoral minor",
+    muscle: "Pectoralis minor",
     category: "Origin",
     answer: "Sternal end of ribs 3-5",
     mastery: 0,
@@ -1250,7 +1250,7 @@ export const cards: Card[] = [
   {
     id: 66,
     region: "shoulder",
-    muscle: "Pectoral minor",
+    muscle: "Pectoralis minor",
     category: "Insertion",
     answer: "Coracoid Process",
     mastery: 0,
@@ -1258,7 +1258,7 @@ export const cards: Card[] = [
   {
     id: 67,
     region: "shoulder",
-    muscle: "Pectoral minor",
+    muscle: "Pectoralis minor",
     category: "Action",
     answer: "Stabilizes scapula, scapular protraction/depression",
     mastery: 0,
@@ -1266,7 +1266,7 @@ export const cards: Card[] = [
   {
     id: 68,
     region: "shoulder",
-    muscle: "Pectoral minor",
+    muscle: "Pectoralis minor",
     category: "Innervation",
     answer: "Medial Pectoral nerve (C8-T1)",
     mastery: 0,

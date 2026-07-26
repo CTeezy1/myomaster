@@ -1,13 +1,10 @@
 import { Button } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Card";
-import { ProgressBar } from "@/app/components/ui/ProgressBar";
 
 export type FeedbackGrade = "partial" | "incorrect";
 
 type StudySessionProps = {
-  moduleName: string;
-  currentIndex: number;
-  totalCards: number;
+  moduleName?: string;
   muscle: string;
   question: string;
   answer: string;
@@ -21,8 +18,6 @@ type StudySessionProps = {
 
 export function StudySession({
   moduleName,
-  currentIndex,
-  totalCards,
   muscle,
   question,
   answer,
@@ -38,11 +33,11 @@ export function StudySession({
   return (
     <div className="w-full">
       <Card className="space-y-7">
-        <ProgressBar
-          moduleName={moduleName}
-          current={currentIndex + 1}
-          total={totalCards}
-        />
+        {moduleName ? (
+          <p className="text-sm font-semibold tracking-tight text-brand-700">
+            {moduleName}
+          </p>
+        ) : null}
 
         <div className="space-y-2 pt-1 text-center">
           <p className="text-xs font-medium uppercase tracking-wider text-text-muted">

@@ -1,3 +1,8 @@
+import {
+  migrateViewedMuscleBriefIds,
+  viewedMuscleBriefIdsNeedMigration,
+} from "@/src/lib/muscle-id-migration";
+
 const STORAGE_KEY = "myomaster-muscle-brief-viewed";
 
 function readViewedIds(): string[] {
@@ -12,7 +17,14 @@ function readViewedIds(): string[] {
 
     if (!Array.isArray(parsed)) return [];
 
-    return parsed.filter((id): id is string => typeof id === "string");
+    const ids = parsed.filter((id): id is string => typeof id === "string");
+    const migrated = migrateViewedMuscleBriefIds(ids);
+
+    if (viewedMuscleBriefIdsNeedMigration(ids)) {
+      writeViewedIds(migrated);
+    }
+
+    return migrated;
   } catch {
     return [];
   }

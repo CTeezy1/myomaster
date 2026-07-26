@@ -46,6 +46,7 @@ export interface CourseProgress {
   introductionStudyDays: Record<string, number>;
   recentGrades: Grade[];
   carriedOverRetryKeys: CardProgressKey[];
+  completedStudyDays: number[];
 }
 
 export interface CourseProgressStore {

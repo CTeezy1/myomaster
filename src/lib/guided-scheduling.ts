@@ -3,10 +3,11 @@ import {
   calculateRecentAccuracy,
   countMusclesIntroducedDuringCurrentCourseWeek,
   getCurrentStudyDay,
+  isCurrentStudyDayCompleted,
 } from "@/src/lib/course-progress";
 import { CARD_CATEGORIES, buildCardProgressKey } from "@/src/lib/card-progress-key";
 import { getDueReviewPromptCount } from "@/src/lib/dashboard-progress";
-import { getDailyNewMuscleTarget } from "@/src/lib/introduction-policy";
+import { getDailyNewMuscleTarget, COURSE_DAYS } from "@/src/lib/introduction-policy";
 import type { CourseProgress, MasteryProgressStore } from "@/src/lib/progress.types";
 import { applyAdaptiveNewMuscleAllowance } from "@/src/lib/daily-workload-planning";
 
@@ -143,34 +144,13 @@ export function getGuidedStudyButtonLabel(
 
 export function canAdvanceStudyDay(
   courseProgress: CourseProgress,
-  muscleIds: string[],
-  masteryStore: MasteryProgressStore,
+  _muscleIds: string[],
+  _masteryStore: MasteryProgressStore,
 ): boolean {
   const currentStudyDay = getCurrentStudyDay(courseProgress);
-  const remainingNewAllowance = getGuidedDailyNewMuscleAllowance(
-    courseProgress,
-    muscleIds,
-    masteryStore,
-  );
-  const dueReviewPromptCount = getDueReviewPromptCount(
-    muscleIds,
-    masteryStore,
-    currentStudyDay,
-  );
 
   return (
-    remainingNewAllowance === 0 &&
-    dueReviewPromptCount === 0 &&
-    !hasIncompleteGuidedMuscle(
-      {
-        id: courseProgress.courseId,
-        name: "",
-        region: "",
-        muscleProfileIds: muscleIds,
-      },
-      courseProgress,
-      masteryStore,
-    ) &&
-    currentStudyDay < 105
+    isCurrentStudyDayCompleted(courseProgress) &&
+    currentStudyDay < COURSE_DAYS
   );
 }

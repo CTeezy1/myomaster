@@ -2,11 +2,12 @@ import { Button } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Card";
 
 type SessionCompleteProps = {
-  correctCount: number;
-  partialCount: number;
-  incorrectCount: number;
+  correctCount?: number;
+  partialCount?: number;
+  incorrectCount?: number;
   title?: string;
   description?: string;
+  showResultStats?: boolean;
   showStudyAgain?: boolean;
   onStudyAgain?: () => void;
   onReturnToDashboard: () => void;
@@ -38,11 +39,12 @@ function ResultStat({
 }
 
 export function SessionComplete({
-  correctCount,
-  partialCount,
-  incorrectCount,
+  correctCount = 0,
+  partialCount = 0,
+  incorrectCount = 0,
   title = "Nice work!",
   description,
+  showResultStats = false,
   showStudyAgain = true,
   onStudyAgain,
   onReturnToDashboard,
@@ -50,7 +52,9 @@ export function SessionComplete({
   const total = correctCount + partialCount + incorrectCount;
   const summary =
     description ??
-    `You reviewed ${total} ${total === 1 ? "card" : "cards"} this session.`;
+    (showResultStats
+      ? `You reviewed ${total} ${total === 1 ? "card" : "cards"} this session.`
+      : "You're done for today.");
 
   return (
     <div className="w-full">
@@ -67,11 +71,13 @@ export function SessionComplete({
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <ResultStat label="Correct" value={correctCount} tone="success" />
-          <ResultStat label="Partial" value={partialCount} tone="warning" />
-          <ResultStat label="Incorrect" value={incorrectCount} tone="error" />
-        </div>
+        {showResultStats && (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <ResultStat label="Correct" value={correctCount} tone="success" />
+            <ResultStat label="Partial" value={partialCount} tone="warning" />
+            <ResultStat label="Incorrect" value={incorrectCount} tone="error" />
+          </div>
+        )}
 
         <div className="flex flex-col gap-3 pt-1">
           {showStudyAgain && onStudyAgain && (

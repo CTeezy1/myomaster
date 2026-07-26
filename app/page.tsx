@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CourseComplete } from "@/app/components/CourseComplete";
 import { Dashboard } from "@/app/components/Dashboard";
-import { MuscleBrief } from "@/app/components/MuscleBrief";
+import { MuscleBriefScreen } from "@/app/components/MuscleBriefScreen";
 import { SessionComplete } from "@/app/components/SessionComplete";
 import { StudySession } from "@/app/components/StudySession";
 import { PageShell } from "@/app/components/ui/PageShell";
@@ -27,7 +27,9 @@ import {
   clearCarriedOverRetryKeys,
   getCourseProgress,
   getCurrentStudyDay,
+  isCurrentStudyDayCompleted,
   markMuscleIntroduced,
+  markStudyDayCompleted,
   setCarriedOverRetryKeys,
   startCourseIfNotStarted,
 } from "@/src/lib/course-progress";
@@ -49,8 +51,6 @@ import {
   advanceSameSessionIndex,
   applySameSessionGrade,
   createSameSessionRelearnState,
-  getDisplayedQuestionNumber,
-  getDisplayedQuestionTotal,
   isSameSessionRelearnComplete,
   type SameSessionRelearnState,
 } from "@/src/lib/same-session-relearn";
@@ -63,6 +63,8 @@ import {
 import type { Grade } from "@/src/lib/progress.types";
 import {
   createInitialCardFeedbackState,
+  getCardPresentationKey,
+  resolveCardFeedbackForPresentation,
   returnFromBriefReview,
   setCardFeedbackGrade,
   showCardAnswer,
@@ -144,6 +146,7 @@ function persistQueuedCardGrade(
       grade,
       new Date(),
       currentStudyDay,
+      { isPractice: queuedCard.isPractice ?? false },
     );
 
     writeMasteryProgress(updatedStore);
@@ -166,6 +169,13 @@ export default function Home() {
     cards.map((card) => ({ ...card })),
   );
   const [cardFeedback, setCardFeedback] = useState(createInitialCardFeedbackState);
+  const [feedbackQueuedCard, setFeedbackQueuedCard] = useState<QueuedCard | null>(
+    null,
+  );
+  const [feedbackPresentationKey, setFeedbackPresentationKey] = useState<
+    string | null
+  >(null);
+  const lastSyncedPresentationKeyRef = useRef<string | null>(null);
   const answerShown = cardFeedback.answerShown;
   const feedbackGrade = cardFeedback.feedbackGrade;
   const [reviewProfile, setReviewProfile] = useState<MuscleProfile | null>(
@@ -183,16 +193,10 @@ export default function Home() {
     totalMuscleCount,
     totalStudyDays,
     currentStudyDay,
-    plannedPromptCount,
     dueReviewPromptCount,
-    newMusclePromptCount,
-    showWorkloadWarning,
     introducedMuscleCount,
-    masteredMuscleCount,
-    remainingNewMuscleAllowance,
     canStartGuidedStudy,
-    guidedStudyLabel,
-    canStartReview,
+    isStudyDayComplete,
     canAdvanceStudyDay,
     refreshDashboardStats,
   } = useDashboardStats(screen === "dashboard");
@@ -205,20 +209,53 @@ export default function Home() {
       ? reviewSession
       : studyDaySession;
   const activeQueuedCard = activeSession?.queue[activeSession.index];
+  const displayedQueuedCard =
+    feedbackGrade !== null && feedbackQueuedCard
+      ? feedbackQueuedCard
+      : activeQueuedCard;
   const activeStudyCard =
-    activeQueuedCard && activeCourse
+    displayedQueuedCard && activeCourse
       ? resolveQueuedCardToStudyCard(
-          activeQueuedCard,
+          displayedQueuedCard,
           studyCards,
           activeCourse,
         )
       : undefined;
+  const currentPresentationKey =
+    feedbackGrade === null && activeQueuedCard && activeSession
+      ? getCardPresentationKey({
+          cardKey: activeQueuedCard.cardKey,
+          sessionIndex: activeSession.index,
+          isPendingRetry: activeQueuedCard.isPendingRetry,
+          presentationSequence: activeSession.gradedPromptCount,
+        })
+      : null;
+  const studySessionPresentationKey =
+    feedbackPresentationKey ?? currentPresentationKey ?? "study-card";
+
+  useEffect(() => {
+    if (currentPresentationKey === null) {
+      return;
+    }
+
+    setCardFeedback((state) =>
+      resolveCardFeedbackForPresentation(
+        state,
+        lastSyncedPresentationKeyRef.current,
+        currentPresentationKey,
+      ),
+    );
+    lastSyncedPresentationKeyRef.current = currentPresentationKey;
+  }, [currentPresentationKey]);
   const isMixedReviewFlow =
     screen === "mixed-review" ||
     (screen === "brief-review" && reviewSession !== null);
 
   function resetSessionStats() {
     setCardFeedback(createInitialCardFeedbackState());
+    setFeedbackQueuedCard(null);
+    setFeedbackPresentationKey(null);
+    lastSyncedPresentationKeyRef.current = null;
     setReviewProfile(null);
     setCorrectCount(0);
     setPartialCount(0);
@@ -226,6 +263,9 @@ export default function Home() {
   }
 
   function advanceToNextCard(session: SameSessionRelearnState) {
+    setFeedbackQueuedCard(null);
+    setFeedbackPresentationKey(null);
+    lastSyncedPresentationKeyRef.current = null;
     setCardFeedback(createInitialCardFeedbackState());
     completeActiveSession(advanceSameSessionIndex(session));
   }
@@ -290,12 +330,19 @@ export default function Home() {
     setScreen(isMixedReviewFlow ? "mixed-review" : "study-day");
   }
 
-  function finishStudyDaySession(session?: SameSessionRelearnState | null) {
-    if (session && activeCourse) {
-      if (session.dailyCapReached && session.unresolvedKeys.length > 0) {
-        setCarriedOverRetryKeys(activeCourse.id, session.unresolvedKeys);
-      } else if (session.unresolvedKeys.length === 0) {
-        clearCarriedOverRetryKeys(activeCourse.id);
+  function finishStudyDaySession(
+    session?: SameSessionRelearnState | null,
+    courseId?: string,
+  ) {
+    const resolvedCourseId = courseId ?? activeCourse?.id;
+
+    if (resolvedCourseId) {
+      markStudyDayCompleted(resolvedCourseId);
+
+      if (session && session.dailyCapReached && session.unresolvedKeys.length > 0) {
+        setCarriedOverRetryKeys(resolvedCourseId, session.unresolvedKeys);
+      } else if (session && session.unresolvedKeys.length === 0) {
+        clearCarriedOverRetryKeys(resolvedCourseId);
       }
     }
 
@@ -354,6 +401,11 @@ export default function Home() {
     resetReviewSession();
 
     const courseProgress = getCourseProgress(course.id);
+
+    if (isCurrentStudyDayCompleted(courseProgress)) {
+      return;
+    }
+
     const masteryStore = readMasteryProgress();
     const workloadPlan = planDailyWorkload(
       course,
@@ -426,6 +478,10 @@ export default function Home() {
     }
 
     if (isStudyDaySessionComplete(session)) {
+      if (activeCourse) {
+        markStudyDayCompleted(activeCourse.id);
+      }
+
       setStudyDaySession(session);
 
       if (session.dailyCapReached) {
@@ -449,8 +505,7 @@ export default function Home() {
       !activeStudyCard ||
       !activeQueuedCard ||
       !activeSession ||
-      feedbackGrade !== null ||
-      activeSession.dailyCapReached
+      feedbackGrade !== null
     ) {
       return;
     }
@@ -467,6 +522,16 @@ export default function Home() {
       advanceToNextCard(gradedSession);
       return;
     }
+
+    setFeedbackQueuedCard(activeQueuedCard);
+    setFeedbackPresentationKey(
+      getCardPresentationKey({
+        cardKey: activeQueuedCard.cardKey,
+        sessionIndex: activeSession.index,
+        isPendingRetry: activeQueuedCard.isPendingRetry,
+        presentationSequence: activeSession.gradedPromptCount,
+      }),
+    );
 
     if (isMixedReviewFlow) {
       setReviewSession(gradedSession);
@@ -530,50 +595,38 @@ export default function Home() {
     <PageShell>
       {screen === "dashboard" && dashboardCourse && (
         <Dashboard
-          courseName={dashboardCourse.name}
           currentStudyDay={currentStudyDay}
           totalStudyDays={totalStudyDays}
-          plannedPromptCount={plannedPromptCount}
-          dueReviewPromptCount={dueReviewPromptCount}
-          newMusclePromptCount={newMusclePromptCount}
-          showWorkloadWarning={showWorkloadWarning}
           introducedMuscleCount={introducedMuscleCount}
-          masteredMuscleCount={masteredMuscleCount}
           totalMuscleCount={totalMuscleCount}
           onStartStudying={handleStartStudying}
-          guidedStudyLabel={guidedStudyLabel}
           canStartGuidedStudy={canStartGuidedStudy}
-          remainingNewMuscleAllowance={remainingNewMuscleAllowance}
+          isStudyDayComplete={isStudyDayComplete}
           canAdvanceStudyDay={canAdvanceStudyDay}
           onAdvanceStudyDay={handleAdvanceStudyDay}
-          onStartReview={handleStartMixedReview}
-          canStartReview={canStartReview}
           onOpenMuscleLibrary={() => router.push("/library")}
           onResetLearningProgress={handleResetLearningProgress}
         />
       )}
 
-      {screen === "brief" && selectedProfile && (
-        <MuscleBrief
-          profile={selectedProfile}
-          mode="course"
-          onPrimaryAction={handleStartPractice}
+      {(screen === "brief" && selectedProfile) ||
+      (screen === "brief-review" && reviewProfile) ? (
+        <MuscleBriefScreen
+          profile={
+            screen === "brief-review" ? reviewProfile! : selectedProfile!
+          }
+          mode={screen === "brief-review" ? "review" : "course"}
+          onPrimaryAction={
+            screen === "brief-review"
+              ? handleReturnToPractice
+              : handleStartPractice
+          }
         />
-      )}
-
-      {screen === "brief-review" && reviewProfile && (
-        <MuscleBrief
-          profile={reviewProfile}
-          mode="review"
-          onPrimaryAction={handleReturnToPractice}
-        />
-      )}
+      ) : null}
 
       {screen === "mixed-review" && activeStudyCard && activeSession && dashboardCourse && (
         <StudySession
-          moduleName={`${dashboardCourse.name} Review`}
-          currentIndex={activeSession.index}
-          totalCards={activeSession.queue.length}
+          key={studySessionPresentationKey}
           muscle={activeStudyCard.muscle}
           question={getQuestion(activeStudyCard.category)}
           answer={activeStudyCard.answer}
@@ -590,9 +643,6 @@ export default function Home() {
 
       {screen === "mixed-review-complete" && (
         <SessionComplete
-          correctCount={correctCount}
-          partialCount={partialCount}
-          incorrectCount={incorrectCount}
           title="Review complete"
           showStudyAgain={false}
           onReturnToDashboard={handleFinishMixedReview}
@@ -601,9 +651,7 @@ export default function Home() {
 
       {screen === "study-day" && activeStudyCard && activeSession && activeCourse && (
         <StudySession
-          moduleName={`${activeCourse.name} · Study Day ${currentStudyDay}`}
-          currentIndex={getDisplayedQuestionNumber(activeSession) - 1}
-          totalCards={getDisplayedQuestionTotal(activeSession)}
+          key={studySessionPresentationKey}
           muscle={activeStudyCard.muscle}
           question={getQuestion(activeStudyCard.category)}
           answer={activeStudyCard.answer}
@@ -620,12 +668,7 @@ export default function Home() {
 
       {screen === "study-day-complete" && (
         <SessionComplete
-          correctCount={correctCount}
-          partialCount={partialCount}
-          incorrectCount={incorrectCount}
           title="Study day complete"
-          description="Today's 40-question limit is complete. Unresolved cards will return first next study day."
-          showStudyAgain={false}
           onReturnToDashboard={handleFinishStudyDayComplete}
         />
       )}

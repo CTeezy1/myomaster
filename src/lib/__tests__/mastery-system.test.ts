@@ -25,7 +25,9 @@ import {
   getCourseProgress,
   getCurrentStudyDay,
   markMuscleIntroduced,
+  markStudyDayCompleted,
   migrateLegacyCourseProgressIfNeeded,
+  setCarriedOverRetryKeys,
   startCourseIfNotStarted,
   writeCourseProgressStore,
 } from "@/src/lib/course-progress";
@@ -54,6 +56,7 @@ import type {
 } from "@/src/lib/progress.types";
 import { buildReviewQueue, type QueuedCard } from "@/src/lib/review-queue";
 import {
+  buildNewMuscleQueuedCards,
   buildStudyDayScheduledQueue,
   buildStudyDaySession,
   isStudyDaySessionComplete,
@@ -90,10 +93,10 @@ import {
   shouldShowMuscleBriefForGuidedStudy,
 } from "@/src/lib/guided-first-exposure";
 import {
-  applyAdaptiveNewMuscleAllowance,
   MIN_STARTING_QUEUE,
   planDailyWorkload,
-  selectFillerReviewUnits,
+  selectRandomPracticeCards,
+  selectRandomPracticeUnits,
   shouldShowWorkloadWarning,
 } from "@/src/lib/daily-workload-planning";
 import {
@@ -220,11 +223,11 @@ describe("scheduling", () => {
 
     expect(progress.successfulReviewCount).toBe(0);
     expect(progress.partialAttempts).toBe(1);
-    expect(progress.state).toBe("learning");
-    expect(progress.currentIntervalDays).toBe(1);
+    expect(progress.state).toBe("new");
+    expect(progress.currentIntervalDays).toBe(0);
   });
 
-  it("handles incorrect grades without erasing attempt history", () => {
+  it("handles incorrect grades by decreasing mastery two levels", () => {
     let progress = applyGradeToProgress(
       createDefaultCardProgress({
         key: "longus-colli:action",
@@ -238,7 +241,7 @@ describe("scheduling", () => {
 
     progress = applyGradeToProgress(progress, "incorrect", reviewedAt, 2);
 
-    expect(progress.successfulReviewCount).toBe(1);
+    expect(progress.successfulReviewCount).toBe(0);
     expect(progress.correctAttempts).toBe(1);
     expect(progress.incorrectAttempts).toBe(1);
     expect(progress.totalAttempts).toBe(2);
@@ -388,7 +391,7 @@ describe("review queue", () => {
     ]);
   });
 
-  it("avoids consecutive blocks from the same muscle when alternatives exist", () => {
+  it("randomizes due review blocks without enforcing anti-streak ordering", () => {
     const muscles = ["longus-colli", "longus-capitis", "sternocleidomastoid"];
     let store = emptyStore();
 
@@ -400,10 +403,7 @@ describe("review queue", () => {
     const queue = buildReviewQueue(units, store, dueStudyDay, () => 0);
     const muscleBlocks = getQueueMuscleBlocks(queue);
 
-    expect(muscleBlocks).toHaveLength(3);
-    for (let index = 1; index < muscleBlocks.length; index += 1) {
-      expect(muscleBlocks[index]).not.toBe(muscleBlocks[index - 1]);
-    }
+    expect(muscleBlocks.sort()).toEqual([...muscles].sort());
   });
 });
 
@@ -722,6 +722,7 @@ describe("guided first exposure", () => {
     markMuscleIntroduced("cervical", "longus-colli", new Date("2026-01-01T12:00:00.000Z"));
     markMuscleBriefViewed("longus-colli");
 
+    markStudyDayCompleted("cervical");
     advanceStudyDay("cervical");
     markMuscleIntroduced("cervical", "longus-capitis", new Date("2026-01-02T12:00:00.000Z"));
 
@@ -743,6 +744,7 @@ describe("study days", () => {
 
   it("advances to study day 2", () => {
     startCourseIfNotStarted("cervical", new Date("2026-01-01T12:00:00.000Z"));
+    markStudyDayCompleted("cervical");
 
     const advanced = advanceStudyDay("cervical");
 
@@ -753,7 +755,9 @@ describe("study days", () => {
   it("allows multiple advances within one real calendar day", () => {
     startCourseIfNotStarted("cervical", new Date("2026-01-01T12:00:00.000Z"));
 
+    markStudyDayCompleted("cervical");
     advanceStudyDay("cervical");
+    markStudyDayCompleted("cervical");
     const advancedTwice = advanceStudyDay("cervical");
 
     expect(advancedTwice.currentStudyDay).toBe(3);
@@ -901,7 +905,9 @@ describe("study-day scheduling", () => {
     startCourseIfNotStarted("cervical", new Date("2026-01-01T12:00:00.000Z"));
     const store = makeIntroducedDueStore("longus-colli", ["action"], 1);
 
+    markStudyDayCompleted("cervical");
     advanceStudyDay("cervical");
+    markStudyDayCompleted("cervical");
     advanceStudyDay("cervical");
 
     const progress = getCourseProgress("cervical");
@@ -1150,6 +1156,97 @@ describe("same-session relearning", () => {
 
     expect(countPendingRetriesForCard(state.queue, "longus-colli:action")).toBe(1);
     expect(state.queue.length).toBe(baseQueue.length + 1);
+    expect(isSameSessionRelearnComplete(state)).toBe(false);
+    state = advanceSameSessionIndex(state);
+    expect(state.queue[state.index]?.isPendingRetry).toBe(true);
+  });
+
+  it("appends another retry after incorrect on an existing retry card", () => {
+    let state = createSameSessionRelearnState(baseQueue);
+    state = applySameSessionGrade(state, baseQueue[0], "incorrect");
+    state = advanceSameSessionIndex(state);
+
+    while (
+      state.index < state.queue.length &&
+      !state.queue[state.index]?.isPendingRetry
+    ) {
+      state = applySameSessionGrade(state, state.queue[state.index], "correct");
+      state = advanceSameSessionIndex(state);
+    }
+
+    const retryCard = state.queue[state.index];
+    expect(retryCard?.isPendingRetry).toBe(true);
+
+    state = applySameSessionGrade(state, retryCard!, "incorrect");
+
+    expect(countPendingRetriesForCard(state.queue, "longus-colli:action")).toBe(1);
+    expect(isSameSessionRelearnComplete(state)).toBe(false);
+
+    state = advanceSameSessionIndex(state);
+
+    expect(state.queue[state.index]?.cardKey).toBe("longus-colli:action");
+    expect(state.queue[state.index]?.isPendingRetry).toBe(true);
+  });
+
+  it("continues recycling after three incorrect grades until correct", () => {
+    let state = createSameSessionRelearnState(baseQueue);
+
+    state = applySameSessionGrade(state, state.queue[state.index], "incorrect");
+    expect(isSameSessionRelearnComplete(state)).toBe(false);
+    expect(state.unresolvedKeys).toContain("longus-colli:action");
+    state = advanceSameSessionIndex(state);
+
+    while (
+      state.index < state.queue.length &&
+      !state.queue[state.index]?.isPendingRetry
+    ) {
+      state = applySameSessionGrade(state, state.queue[state.index], "correct");
+      state = advanceSameSessionIndex(state);
+    }
+
+    for (let miss = 0; miss < 2; miss += 1) {
+      expect(state.queue[state.index]?.isPendingRetry).toBe(true);
+      state = applySameSessionGrade(state, state.queue[state.index], "incorrect");
+      expect(isSameSessionRelearnComplete(state)).toBe(false);
+      expect(state.unresolvedKeys).toContain("longus-colli:action");
+      state = advanceSameSessionIndex(state);
+    }
+
+    expect(state.queue[state.index]?.isPendingRetry).toBe(true);
+
+    state = applySameSessionGrade(state, state.queue[state.index], "correct");
+    state = advanceSameSessionIndex(state);
+
+    expect(state.unresolvedKeys).not.toContain("longus-colli:action");
+    expect(isSameSessionRelearnComplete(state)).toBe(true);
+  });
+
+  it("continues recycling partial retries until correct", () => {
+    let state = createSameSessionRelearnState(baseQueue);
+
+    state = applySameSessionGrade(state, state.queue[state.index], "partial");
+    expect(isSameSessionRelearnComplete(state)).toBe(false);
+    state = advanceSameSessionIndex(state);
+
+    while (
+      state.index < state.queue.length &&
+      !state.queue[state.index]?.isPendingRetry
+    ) {
+      state = applySameSessionGrade(state, state.queue[state.index], "correct");
+      state = advanceSameSessionIndex(state);
+    }
+
+    for (let miss = 0; miss < 2; miss += 1) {
+      expect(state.queue[state.index]?.isPendingRetry).toBe(true);
+      state = applySameSessionGrade(state, state.queue[state.index], "partial");
+      expect(isSameSessionRelearnComplete(state)).toBe(false);
+      state = advanceSameSessionIndex(state);
+    }
+
+    state = applySameSessionGrade(state, state.queue[state.index], "correct");
+    state = advanceSameSessionIndex(state);
+
+    expect(isSameSessionRelearnComplete(state)).toBe(true);
   });
 
   it("clears a pending retry after a correct grade", () => {
@@ -1189,7 +1286,7 @@ describe("same-session relearning", () => {
     }
   });
 
-  it("never grades more than 40 prompts in a capped study day", () => {
+  it("never grades more than 40 static prompts in a capped study day", () => {
     const largeQueue: QueuedCard[] = myomasterProgramCourse.muscleProfileIds
       .slice(0, 60)
       .map((muscleId) => ({
@@ -1200,15 +1297,167 @@ describe("same-session relearning", () => {
 
     let state = createSameSessionRelearnState(largeQueue, { enforceDailyCap: true });
 
-    while (state.index < state.queue.length && !state.dailyCapReached) {
+    while (
+      state.index < state.queue.length &&
+      !state.dailyCapReached
+    ) {
       const current = state.queue[state.index];
       state = applySameSessionGrade(state, current, "correct");
       state = advanceSameSessionIndex(state);
     }
 
-    expect(state.gradedPromptCount).toBe(DAILY_GRADED_PROMPT_CAP);
+    expect(state.staticGradedCount).toBe(DAILY_GRADED_PROMPT_CAP);
     expect(state.dailyCapReached).toBe(true);
     expect(isStudyDaySessionComplete(state)).toBe(true);
+  });
+
+  it("appends a retry after an incorrect grade on the 40th static card", () => {
+    const queue: QueuedCard[] = Array.from({ length: 40 }, (_, index) => ({
+      muscleId: "longus-colli",
+      cardKey: `longus-colli:action-${index}` as CardProgressKey,
+      category: "action" as const,
+    }));
+    queue[39] = {
+      muscleId: "longus-colli",
+      cardKey: "longus-colli:action",
+      category: "action",
+    };
+
+    let state = createSameSessionRelearnState(queue, { enforceDailyCap: true });
+
+    for (let index = 0; index < 39; index += 1) {
+      state = applySameSessionGrade(state, state.queue[state.index], "correct");
+      state = advanceSameSessionIndex(state);
+    }
+
+    expect(state.staticGradedCount).toBe(39);
+    expect(state.dailyCapReached).toBe(false);
+
+    state = applySameSessionGrade(state, state.queue[state.index], "incorrect");
+
+    expect(state.staticGradedCount).toBe(40);
+    expect(state.dailyCapReached).toBe(true);
+    expect(countPendingRetriesForCard(state.queue, "longus-colli:action")).toBe(1);
+    expect(isStudyDaySessionComplete(state)).toBe(false);
+  });
+
+  it("allows total graded prompts to exceed 40 when retries are required", () => {
+    const queue: QueuedCard[] = Array.from({ length: 40 }, (_, index) => ({
+      muscleId: "longus-colli",
+      cardKey: `longus-colli:action-${index}` as CardProgressKey,
+      category: "action" as const,
+    }));
+    queue[39] = {
+      muscleId: "longus-colli",
+      cardKey: "longus-colli:action",
+      category: "action",
+    };
+
+    let state = createSameSessionRelearnState(queue, { enforceDailyCap: true });
+
+    for (let index = 0; index < 39; index += 1) {
+      state = applySameSessionGrade(state, state.queue[state.index], "correct");
+      state = advanceSameSessionIndex(state);
+    }
+
+    state = applySameSessionGrade(state, state.queue[state.index], "incorrect");
+    state = advanceSameSessionIndex(state);
+
+    expect(state.gradedPromptCount).toBe(40);
+    expect(state.queue[state.index]?.cardKey).toBe("longus-colli:action");
+    expect(state.queue[state.index]?.isPendingRetry).toBe(true);
+
+    state = applySameSessionGrade(state, state.queue[state.index], "correct");
+
+    expect(state.gradedPromptCount).toBeGreaterThan(40);
+    expect(isStudyDaySessionComplete(state)).toBe(true);
+  });
+
+  it("blocks study day completion until all retries are answered correctly", () => {
+    const queue: QueuedCard[] = [
+      {
+        muscleId: "longus-colli",
+        cardKey: "longus-colli:action",
+        category: "action",
+      },
+    ];
+    let state = createSameSessionRelearnState(queue, { enforceDailyCap: true });
+
+    state = applySameSessionGrade(state, queue[0], "partial");
+    state = advanceSameSessionIndex(state);
+
+    expect(isStudyDaySessionComplete(state)).toBe(false);
+    expect(state.unresolvedKeys).toContain("longus-colli:action");
+
+    while (
+      state.index < state.queue.length &&
+      state.queue[state.index]?.cardKey !== "longus-colli:action"
+    ) {
+      state = advanceSameSessionIndex(state);
+    }
+
+    state = applySameSessionGrade(state, state.queue[state.index], "correct");
+
+    expect(isStudyDaySessionComplete(state)).toBe(true);
+    expect(state.unresolvedKeys).not.toContain("longus-colli:action");
+  });
+
+  it("restores carried-over retries after closing and reopening a study day", () => {
+    startCourseIfNotStarted("cervical", new Date("2026-01-01T12:00:00.000Z"));
+    setCarriedOverRetryKeys("cervical", ["longus-colli:action"]);
+
+    const session = buildStudyDaySession(
+      cervicalCourse,
+      getCourseProgress("cervical"),
+      emptyStore(),
+    );
+
+    expect(
+      session.queue.some(
+        (card) =>
+          card.cardKey === "longus-colli:action" && card.isPendingRetry === true,
+      ),
+    ).toBe(true);
+    expect(getCourseProgress("cervical").carriedOverRetryKeys).toEqual([]);
+  });
+
+  it("does not apply a second mastery penalty when a missed card is retried with partial", () => {
+    let store = introduceMuscleCards(emptyStore(), "longus-colli");
+    store = applyCardGrade(
+      store,
+      "longus-colli",
+      "action",
+      "incorrect",
+      reviewedAt,
+      1,
+    );
+    const afterIncorrect = store.cards["longus-colli:action"]!.successfulReviewCount;
+
+    store = applyCardGrade(
+      store,
+      "longus-colli",
+      "action",
+      "partial",
+      reviewedAt,
+      1,
+    );
+
+    expect(store.cards["longus-colli:action"]!.successfulReviewCount).toBe(
+      afterIncorrect,
+    );
+
+    store = applyCardGrade(
+      store,
+      "longus-colli",
+      "action",
+      "correct",
+      reviewedAt,
+      2,
+    );
+
+    expect(store.cards["longus-colli:action"]!.successfulReviewCount).toBe(
+      afterIncorrect + 1,
+    );
   });
 
   it("carries unresolved retries to the next study day queue", () => {
@@ -1226,8 +1475,13 @@ describe("same-session relearning", () => {
     );
 
     expect(carriedQueue[0]?.cardKey).toBe("longus-colli:action");
-    expect(plan[0]?.cardKey).toBe("longus-colli:action");
-    expect(plan[0]?.isPendingRetry).toBe(true);
+    const carriedIndex = plan.findIndex(
+      (card) =>
+        card.cardKey === "longus-colli:action" && card.isPendingRetry === true,
+    );
+    expect(carriedIndex).toBeGreaterThanOrEqual(0);
+    expect(carriedIndex).toBe(plan.length - 1);
+    expect(plan[carriedIndex]?.isPendingRetry).toBe(true);
   });
 });
 
@@ -1277,7 +1531,7 @@ function makeFutureReviewStore(
 }
 
 describe("study-day session queue", () => {
-  it("plans at least 20 prompts on light review days", () => {
+  it("plans at least 16 prompts on light review days", () => {
     const muscleIds = cervicalCourse.muscleProfileIds.slice(0, 8);
     const store = makeFutureReviewStore(muscleIds, 1, 10);
     const courseProgress = {
@@ -1295,7 +1549,7 @@ describe("study-day session queue", () => {
     expect(plan.plannedPromptCount).toBeGreaterThanOrEqual(MIN_STARTING_QUEUE);
   });
 
-  it("combines due reviews and new-muscle cards in the planned queue", () => {
+  it("places new-muscle cards before due reviews in the planned queue", () => {
     const courseProgress = {
       ...createDefaultCourseProgress("cervical"),
       currentStudyDay: 2,
@@ -1309,6 +1563,16 @@ describe("study-day session queue", () => {
     expect(plan.dueReviewPromptCount).toBe(1);
     expect(plan.queue.some((card) => card.cardKey === "longus-colli:action")).toBe(true);
     expect(plan.queue.some((card) => card.muscleId === "longus-capitis")).toBe(true);
+
+    const firstDueIndex = plan.queue.findIndex(
+      (card) => card.cardKey === "longus-colli:action",
+    );
+    const firstNewIndex = plan.queue.findIndex(
+      (card) => card.muscleId === "longus-capitis",
+    );
+
+    expect(firstNewIndex).toBeGreaterThanOrEqual(0);
+    expect(firstDueIndex).toBeGreaterThan(firstNewIndex);
   });
 
   it("cannot complete until relearning is resolved", () => {
@@ -1336,7 +1600,7 @@ describe("study-day session queue", () => {
 });
 
 describe("daily workload planning", () => {
-  it("fills light days up to the 20-prompt starting queue", () => {
+  it("fills light days up to the 16-prompt minimum", () => {
     const muscleIds = cervicalCourse.muscleProfileIds.slice(0, 8);
     const store = makeFutureReviewStore(muscleIds, 1, 10);
     const plan = planDailyWorkload(
@@ -1354,10 +1618,103 @@ describe("daily workload planning", () => {
     );
 
     expect(plan.plannedPromptCount).toBeGreaterThanOrEqual(MIN_STARTING_QUEUE);
-    expect(plan.fillerReviewPromptCount).toBeGreaterThan(0);
+    expect(plan.practicePromptCount).toBeGreaterThan(0);
+    expect(plan.queue.filter((card) => card.isPractice).length).toBe(
+      plan.practicePromptCount,
+    );
   });
 
-  it("does not duplicate filler cards already in the queue", () => {
+  it("allows repeated practice card keys when fewer than 16 unique cards exist", () => {
+    const muscleIds = ["longus-colli"];
+    const coreQueue = buildNewMuscleQueuedCards("longus-colli");
+    const practiceQueue = selectRandomPracticeCards(
+      muscleIds,
+      [],
+      coreQueue,
+      8,
+      () => 0,
+    );
+
+    expect(practiceQueue).toHaveLength(8);
+    expect(practiceQueue.every((card) => card.isPractice === true)).toBe(true);
+    expect(new Set(practiceQueue.map((card) => card.cardKey)).size).toBeLessThan(8);
+  });
+
+  it("builds a 16-card day 1 queue from two newly introduced muscles", () => {
+    const muscleIds = ["longus-colli", "longus-capitis"];
+    let store = emptyStore();
+
+    for (const muscleId of muscleIds) {
+      store = introduceMuscleCards(store, muscleId);
+    }
+
+    const plan = planDailyWorkload(
+      cervicalCourse,
+      {
+        ...createDefaultCourseProgress("cervical"),
+        currentStudyDay: 1,
+        startedAt: "2026-01-01T12:00:00.000Z",
+        introducedMuscleIds: muscleIds,
+        introductionStudyDays: {
+          "longus-colli": 1,
+          "longus-capitis": 1,
+        },
+      },
+      store,
+      () => 0.5,
+    );
+
+    expect(plan.newMusclePromptCount).toBe(8);
+    expect(plan.practicePromptCount).toBe(8);
+    expect(plan.plannedPromptCount).toBe(16);
+    expect(countNonRetryCards(plan.queue)).toBe(16);
+    expect(plan.queue.every((card) => !card.isPendingRetry)).toBe(true);
+  });
+
+  it("selects practice filler from muscles introduced on the current study day", () => {
+    const muscleIds = ["longus-colli", "longus-capitis"];
+    const coreQueue = muscleIds.flatMap((muscleId) =>
+      buildNewMuscleQueuedCards(muscleId),
+    );
+    const practiceQueue = selectRandomPracticeCards(
+      muscleIds,
+      [],
+      coreQueue,
+      8,
+      () => 0,
+    );
+
+    expect(practiceQueue).toHaveLength(8);
+    expect(
+      practiceQueue.every((card) => muscleIds.includes(card.muscleId)),
+    ).toBe(true);
+  });
+
+  it("does not count retry prompts toward the 16-card initial static minimum", () => {
+    const staticQueue = Array.from({ length: 16 }, (_, index) => ({
+      muscleId: "longus-colli",
+      cardKey: `longus-colli:action-${index}` as CardProgressKey,
+      category: "action" as const,
+    }));
+    staticQueue[15] = {
+      muscleId: "longus-colli",
+      cardKey: "longus-colli:action",
+      category: "action",
+    };
+
+    let state = createSameSessionRelearnState(staticQueue, {
+      enforceDailyCap: true,
+    });
+
+    expect(state.initialStaticQueueLength).toBe(16);
+
+    state = applySameSessionGrade(state, staticQueue[15], "incorrect");
+
+    expect(countNonRetryCards(state.queue)).toBe(16);
+    expect(state.queue.length).toBe(17);
+  });
+
+  it("does not duplicate practice cards already in the queue when unique cards remain", () => {
     const store = makeReviewReadyStore(["longus-colli"], 1);
     const plan = planDailyWorkload(
       cervicalCourse,
@@ -1375,68 +1732,61 @@ describe("daily workload planning", () => {
     expect(new Set(cardKeys).size).toBe(cardKeys.length);
   });
 
-  it("prefers near-due filler cards over far-future cards", () => {
+  it("selects random practice cards from introduced muscles", () => {
     const muscleIds = cervicalCourse.muscleProfileIds.slice(0, 6);
     const store = makeFutureReviewStore(muscleIds, 1, 20);
-    store.cards["longus-capitis:action"] = {
-      ...store.cards["longus-capitis:action"]!,
-      nextReviewStudyDay: 3,
+    const courseProgress = {
+      ...createDefaultCourseProgress("cervical"),
+      currentStudyDay: 2,
+      startedAt: "2026-01-01T12:00:00.000Z",
+      introducedMuscleIds: muscleIds,
+      introductionStudyDays: Object.fromEntries(
+        muscleIds.map((muscleId) => [muscleId, 1]),
+      ),
     };
     const units = muscleIds.flatMap((muscleId) =>
       buildStudyUnitsForMuscle(muscleId),
     );
-    const fillerUnits = selectFillerReviewUnits(
+    const practiceUnits = selectRandomPracticeUnits(
       units,
       store,
+      courseProgress,
       2,
       new Set(),
       8,
+      () => 0.99,
     );
-    const firstUnit = fillerUnits[0];
 
-    expect(firstUnit?.type).toBe("single");
-    if (firstUnit?.type === "single") {
-      expect(firstUnit.cardKey).toBe("longus-capitis:action");
-    }
+    expect(practiceUnits.length).toBeGreaterThan(0);
+    expect(
+      practiceUnits.every((unit) => muscleIds.includes(unit.muscleId)),
+    ).toBe(true);
   });
 
-  it("keeps attachment pairs together in filler reviews", () => {
-    let store = makeIntroducedDueStore("longus-colli", ["origin"], 1);
-    store = applyCardGrade(store, "longus-colli", "insertion", "correct", reviewedAt, 1);
-    store.cards["longus-colli:origin"] = {
-      ...store.cards["longus-colli:origin"]!,
-      nextReviewStudyDay: 4,
-    };
-    store.cards["longus-colli:insertion"] = {
-      ...store.cards["longus-colli:insertion"]!,
-      nextReviewStudyDay: 4,
-    };
-
+  it("adds practice cards when enough introduced muscles exist", () => {
+    const muscleIds = cervicalCourse.muscleProfileIds.slice(0, 8);
+    const store = makeFutureReviewStore(muscleIds, 1, 10);
     const plan = planDailyWorkload(
       cervicalCourse,
       {
         ...createDefaultCourseProgress("cervical"),
-        currentStudyDay: 1,
+        currentStudyDay: 2,
         startedAt: "2026-01-01T12:00:00.000Z",
-        introducedMuscleIds: ["longus-colli"],
-        introductionStudyDays: { "longus-colli": 1 },
+        introducedMuscleIds: muscleIds,
+        introductionStudyDays: Object.fromEntries(
+          muscleIds.map((muscleId) => [muscleId, 1]),
+        ),
       },
       store,
       () => 0,
     );
+    const practiceCards = plan.queue.filter((card) => card.isPractice);
 
-    const originIndex = plan.queue.findIndex(
-      (card) => card.cardKey === "longus-colli:origin",
-    );
-    const insertionIndex = plan.queue.findIndex(
-      (card) => card.cardKey === "longus-colli:insertion",
-    );
-
-    expect(originIndex).toBeGreaterThanOrEqual(0);
-    expect(Math.abs(originIndex - insertionIndex)).toBe(1);
+    expect(practiceCards.length).toBeGreaterThan(0);
+    expect(practiceCards.every((card) => card.isPractice === true)).toBe(true);
   });
 
-  it("reduces new muscles when mandatory prompts are between 20 and 30", () => {
+  it("uses the base new-muscle allowance regardless of due review load", () => {
     const muscleIds = cervicalCourse.muscleProfileIds.slice(0, 6);
     const store = makeReviewReadyStore(muscleIds, 1);
     const courseProgress = {
@@ -1455,19 +1805,15 @@ describe("daily workload planning", () => {
     );
     const plan = planDailyWorkload(cervicalCourse, courseProgress, store);
 
-    expect(plan.mandatoryPromptCount).toBeGreaterThanOrEqual(20);
-    expect(plan.mandatoryPromptCount).toBeLessThanOrEqual(30);
-    expect(plan.newMuscleAllowance).toBe(
-      applyAdaptiveNewMuscleAllowance(baseAllowance, plan.mandatoryPromptCount),
-    );
-    expect(plan.newMuscleAllowance).toBeLessThan(baseAllowance);
+    expect(plan.newMuscleAllowance).toBe(baseAllowance);
+    expect(plan.newMusclePromptCount).toBeGreaterThan(0);
   });
 
-  it("introduces zero new muscles when mandatory prompts exceed 30", () => {
-    const muscleIds = myomasterProgramCourse.muscleProfileIds.slice(0, 11);
-    const store = makeReviewReadyStore(muscleIds, 1);
+  it("schedules pending new muscles before due reviews when allowance remains", () => {
+    const muscleIds = cervicalCourse.muscleProfileIds.slice(0, 2);
+    const store = makeFutureReviewStore(muscleIds, 1, 10);
     const plan = planDailyWorkload(
-      myomasterProgramCourse,
+      cervicalCourse,
       {
         ...createDefaultCourseProgress("cervical"),
         currentStudyDay: 2,
@@ -1480,9 +1826,8 @@ describe("daily workload planning", () => {
       store,
     );
 
-    expect(plan.mandatoryPromptCount).toBeGreaterThan(30);
-    expect(plan.newMuscleAllowance).toBe(0);
-    expect(plan.newMusclePromptCount).toBe(0);
+    expect(plan.newMuscleAllowance).toBeGreaterThan(0);
+    expect(plan.newMusclePromptCount).toBeGreaterThan(0);
   });
 
   it("shows a workload warning above 40 mandatory prompts", () => {
@@ -1577,6 +1922,36 @@ describe("muscle mastery", () => {
 
     expect(getMuscleMasteryState("longus-capitis", mastered)).toBe("mastered");
     expect(getMuscleMasteryPercent("longus-capitis", mastered)).toBe(100);
+  });
+  it("does not increase mastery when a practice card is answered correctly", () => {
+    let store = introduceMuscleCards(emptyStore(), "longus-colli");
+    store = applyCardGrade(
+      store,
+      "longus-colli",
+      "action",
+      "partial",
+      reviewedAt,
+      1,
+    );
+    const beforeCount = store.cards["longus-colli:action"]!.successfulReviewCount;
+    const beforeCorrect = store.cards["longus-colli:action"]!.correctAttempts;
+
+    store = applyCardGrade(
+      store,
+      "longus-colli",
+      "action",
+      "correct",
+      reviewedAt,
+      1,
+      { isPractice: true },
+    );
+
+    expect(store.cards["longus-colli:action"]!.successfulReviewCount).toBe(
+      beforeCount,
+    );
+    expect(store.cards["longus-colli:action"]!.correctAttempts).toBe(
+      beforeCorrect + 1,
+    );
   });
 });
 

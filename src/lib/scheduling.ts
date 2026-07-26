@@ -37,18 +37,6 @@ function resolveStateAfterCorrect(
   return "learning";
 }
 
-function resolveStateAfterPartial(previousState: LearningState): LearningState {
-  if (
-    previousState === "review" ||
-    previousState === "relearning" ||
-    previousState === "mastered"
-  ) {
-    return "relearning";
-  }
-
-  return "learning";
-}
-
 function resolveNextReviewStudyDay(
   currentStudyDay: number,
   intervalDays: number,
@@ -90,23 +78,12 @@ function applyCorrect(
 function applyPartial(
   progress: CardProgress,
   reviewedAt: Date,
-  currentStudyDay: number,
 ): CardProgress {
-  const baseInterval = Math.max(progress.currentIntervalDays, 1);
-  const nextIntervalDays = Math.max(1, Math.floor(baseInterval / 2));
-
   return {
     ...progress,
-    state: resolveStateAfterPartial(progress.state),
     totalAttempts: progress.totalAttempts + 1,
     partialAttempts: progress.partialAttempts + 1,
-    currentIntervalDays: nextIntervalDays,
     lastReviewedAt: toIsoString(reviewedAt),
-    nextReviewAt: toIsoString(addDays(reviewedAt, nextIntervalDays)),
-    nextReviewStudyDay: resolveNextReviewStudyDay(
-      currentStudyDay,
-      nextIntervalDays,
-    ),
   };
 }
 
@@ -115,13 +92,18 @@ function applyIncorrect(
   reviewedAt: Date,
   currentStudyDay: number,
 ): CardProgress {
-  const nextIntervalDays = 1;
+  const successfulReviewCount = Math.max(0, progress.successfulReviewCount - 2);
+  const nextIntervalDays = Math.max(
+    1,
+    getIntervalForSuccessfulReviewCount(successfulReviewCount),
+  );
 
   return {
     ...progress,
     state: "relearning",
     totalAttempts: progress.totalAttempts + 1,
     incorrectAttempts: progress.incorrectAttempts + 1,
+    successfulReviewCount,
     currentIntervalDays: nextIntervalDays,
     lastReviewedAt: toIsoString(reviewedAt),
     nextReviewAt: toIsoString(addDays(reviewedAt, nextIntervalDays)),
@@ -142,10 +124,29 @@ export function applyGradeToProgress(
     case "correct":
       return applyCorrect(progress, reviewedAt, currentStudyDay);
     case "partial":
-      return applyPartial(progress, reviewedAt, currentStudyDay);
+      return applyPartial(progress, reviewedAt);
     case "incorrect":
       return applyIncorrect(progress, reviewedAt, currentStudyDay);
   }
+}
+
+export function applyPracticeCorrect(
+  progress: CardProgress,
+  reviewedAt: Date,
+): CardProgress {
+  return {
+    ...progress,
+    totalAttempts: progress.totalAttempts + 1,
+    correctAttempts: progress.correctAttempts + 1,
+    lastReviewedAt: toIsoString(reviewedAt),
+  };
+}
+
+export function applyPracticePartial(
+  progress: CardProgress,
+  reviewedAt: Date,
+): CardProgress {
+  return applyPartial(progress, reviewedAt);
 }
 
 export function isCardDue(

@@ -6,6 +6,10 @@ import {
 import type {
   CardProgressKey,
 } from "@/src/lib/card-progress-key";
+import {
+  courseProgressNeedsMuscleIdMigration,
+  migrateCourseProgress,
+} from "@/src/lib/muscle-id-migration";
 import type {
   CourseProgress,
   CourseProgressStore,
@@ -144,6 +148,32 @@ function parseRecentGrades(value: unknown): Grade[] {
   return value.filter(isGrade).slice(-MAX_RECENT_GRADES);
 }
 
+function parseCompletedStudyDays(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<number>();
+  const studyDays: number[] = [];
+
+  for (const entry of value) {
+    if (typeof entry !== "number" || !Number.isInteger(entry)) {
+      continue;
+    }
+
+    const studyDay = clampStudyDay(entry);
+
+    if (seen.has(studyDay)) {
+      continue;
+    }
+
+    seen.add(studyDay);
+    studyDays.push(studyDay);
+  }
+
+  return studyDays.sort((left, right) => left - right);
+}
+
 function parseCourseProgress(value: unknown): CourseProgress | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -176,6 +206,7 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
   const carriedOverRetryKeys = parseStringArray(
     record.carriedOverRetryKeys,
   ) as CardProgressKey[];
+  const completedStudyDays = parseCompletedStudyDays(record.completedStudyDays);
 
   const filteredIntroductionDates: Record<string, string> = {};
   const filteredIntroductionStudyDays: Record<string, number> = {};
@@ -200,6 +231,7 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
     introductionStudyDays: filteredIntroductionStudyDays,
     recentGrades,
     carriedOverRetryKeys,
+    completedStudyDays,
   };
 }
 
@@ -343,6 +375,7 @@ function normalizeCourseProgress(progress: CourseProgress): CourseProgress {
     currentStudyDay: clampStudyDay(progress.currentStudyDay ?? 1),
     introductionStudyDays: { ...progress.introductionStudyDays },
     carriedOverRetryKeys: progress.carriedOverRetryKeys ?? [],
+    completedStudyDays: progress.completedStudyDays ?? [],
   };
 
   for (const muscleId of normalized.introducedMuscleIds) {
@@ -376,7 +409,7 @@ function normalizeCourseProgress(progress: CourseProgress): CourseProgress {
 
   normalized.currentStudyDay = clampStudyDay(normalized.currentStudyDay);
 
-  return normalized;
+  return migrateCourseProgress(normalized);
 }
 
 export function createDefaultCourseProgress(courseId: string): CourseProgress {
@@ -390,6 +423,7 @@ export function createDefaultCourseProgress(courseId: string): CourseProgress {
     introductionStudyDays: {},
     recentGrades: [],
     carriedOverRetryKeys: [],
+    completedStudyDays: [],
   };
 }
 
@@ -414,7 +448,13 @@ export function getCourseProgress(courseId: string): CourseProgress {
     migrateLegacyCourseProgressIfNeeded(courseId);
   }
 
-  const progress = readStore().courses[courseId];
+  const store = readStore();
+  const progress = store.courses[courseId];
+
+  if (progress && courseProgressNeedsMuscleIdMigration(progress)) {
+    store.courses[courseId] = normalizeCourseProgress(progress);
+    writeStore(store);
+  }
 
   return normalizeCourseProgress(
     progress ?? createDefaultCourseProgress(courseId),
@@ -425,10 +465,47 @@ export function getCurrentStudyDay(progress: CourseProgress): number {
   return clampStudyDay(progress.currentStudyDay);
 }
 
+export function isStudyDayCompleted(
+  progress: CourseProgress,
+  studyDay: number = getCurrentStudyDay(progress),
+): boolean {
+  return progress.completedStudyDays.includes(clampStudyDay(studyDay));
+}
+
+export function isCurrentStudyDayCompleted(progress: CourseProgress): boolean {
+  return isStudyDayCompleted(progress, getCurrentStudyDay(progress));
+}
+
+export function markStudyDayCompleted(
+  courseId: string,
+  studyDay?: number,
+): CourseProgress {
+  const progress = getCourseProgress(courseId);
+  const targetStudyDay = clampStudyDay(studyDay ?? progress.currentStudyDay);
+
+  if (progress.completedStudyDays.includes(targetStudyDay)) {
+    return progress;
+  }
+
+  const updated: CourseProgress = {
+    ...progress,
+    completedStudyDays: [...progress.completedStudyDays, targetStudyDay].sort(
+      (left, right) => left - right,
+    ),
+  };
+
+  writeCourseProgress(updated);
+
+  return updated;
+}
+
 export function advanceStudyDay(courseId: string): CourseProgress {
   const progress = getCourseProgress(courseId);
 
-  if (progress.currentStudyDay >= COURSE_DAYS) {
+  if (
+    progress.currentStudyDay >= COURSE_DAYS ||
+    !isCurrentStudyDayCompleted(progress)
+  ) {
     return progress;
   }
 

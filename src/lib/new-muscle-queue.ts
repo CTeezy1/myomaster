@@ -28,6 +28,15 @@ export function buildNewMuscleQueuedCards(muscleId: string): QueuedCard[] {
   });
 }
 
+export function getMuscleIdsIntroducedOnStudyDay(
+  courseProgress: CourseProgress,
+  studyDay: number,
+): string[] {
+  return courseProgress.introducedMuscleIds.filter(
+    (muscleId) => courseProgress.introductionStudyDays[muscleId] === studyDay,
+  );
+}
+
 export function getNewMuscleIdsForStudyDay(
   course: Course,
   courseProgress: CourseProgress,

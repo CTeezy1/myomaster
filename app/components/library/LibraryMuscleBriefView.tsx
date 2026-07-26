@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { MuscleBrief } from "@/app/components/MuscleBrief";
+import { MuscleBriefScreen } from "@/app/components/MuscleBriefScreen";
 import type { MuscleProfile } from "@/src/data/muscle-profile.types";
 
 type LibraryMuscleBriefViewProps = {
@@ -18,7 +18,7 @@ export function LibraryMuscleBriefView({
   const router = useRouter();
 
   return (
-    <MuscleBrief
+    <MuscleBriefScreen
       profile={profile}
       mode="library"
       libraryRegionName={regionName}
