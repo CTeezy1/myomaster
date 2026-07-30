@@ -7,7 +7,10 @@ import { Dashboard } from "@/app/components/Dashboard";
 import { MuscleBriefScreen } from "@/app/components/MuscleBriefScreen";
 import { SessionComplete } from "@/app/components/SessionComplete";
 import { StudySession } from "@/app/components/StudySession";
+import { StudySessionErrorBoundary } from "@/app/components/StudySessionErrorBoundary";
 import { PageShell } from "@/app/components/ui/PageShell";
+import { Button } from "@/app/components/ui/Button";
+import { Card } from "@/app/components/ui/Card";
 import { useDashboardStats } from "@/src/hooks/useDashboardStats";
 import { useMuscleBriefProgress } from "@/src/hooks/useMuscleBriefProgress";
 import { DEFAULT_COURSE_ID } from "@/src/config/study-flow";
@@ -35,10 +38,17 @@ import {
   startCourseIfNotStarted,
 } from "@/src/lib/course-progress";
 import {
+  assignDailyObligationIds,
+  getObligationProgressCounts,
+  recordObligationCompletion,
+  type StudyDayObligationProgress,
+} from "@/src/lib/study-day-obligation-progress";
+import {
   clearActiveStudySession,
   createPersistedActiveStudySession,
   getPlannedStaticQueueFromSession,
   isResumableActiveStudySession,
+  preparePersistedActiveStudySessionForRestore,
   readActiveStudySession,
   writeActiveStudySession,
   type ActiveStudyScreen,
@@ -62,7 +72,9 @@ import {
   advanceSameSessionIndex,
   applySameSessionGrade,
   createSameSessionRelearnState,
+  getCurrentSessionCard,
   isSameSessionRelearnComplete,
+  sanitizeSameSessionRelearnState,
   type SameSessionRelearnState,
 } from "@/src/lib/same-session-relearn";
 import {
@@ -207,6 +219,8 @@ export default function Home() {
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [studyDaySession, setStudyDaySession] =
     useState<SameSessionRelearnState | null>(null);
+  const [obligationProgress, setObligationProgress] =
+    useState<StudyDayObligationProgress | null>(null);
   const [reviewSession, setReviewSession] =
     useState<SameSessionRelearnState | null>(null);
   const {
@@ -256,6 +270,10 @@ export default function Home() {
       : null;
   const studySessionPresentationKey =
     feedbackPresentationKey ?? currentPresentationKey ?? "study-card";
+  const studyDayCardProgress =
+    screen === "study-day" && obligationProgress
+      ? getObligationProgressCounts(obligationProgress)
+      : null;
 
   useEffect(() => {
     if (currentPresentationKey === null) {
@@ -279,43 +297,56 @@ export default function Home() {
     persisted: PersistedActiveStudySession,
     course: Course,
   ) {
-    plannedStaticQueueRef.current = persisted.plannedStaticQueue.map((card) => ({
+    const prepared = preparePersistedActiveStudySessionForRestore(persisted);
+
+    plannedStaticQueueRef.current = prepared.plannedStaticQueue.map((card) => ({
       ...card,
     }));
-    setStudyDaySession({
-      ...persisted.session,
-      queue: persisted.session.queue.map((card) => ({ ...card })),
-      unresolvedKeys: [...persisted.session.unresolvedKeys],
-      pairCorrectCounts: { ...persisted.session.pairCorrectCounts },
+    setObligationProgress({
+      total: prepared.obligationProgress.total,
+      completedObligationIds: [...prepared.obligationProgress.completedObligationIds],
     });
+    setStudyDaySession(prepared.session);
     setActiveCourse(course);
-    setCurrentMuscleIndex(persisted.currentMuscleIndex);
-    setCardFeedback({ ...persisted.cardFeedback });
+    setCurrentMuscleIndex(prepared.currentMuscleIndex);
+    setCardFeedback({ ...prepared.cardFeedback });
     setFeedbackQueuedCard(
-      persisted.feedbackQueuedCard ? { ...persisted.feedbackQueuedCard } : null,
+      prepared.feedbackQueuedCard ? { ...prepared.feedbackQueuedCard } : null,
     );
-    setFeedbackPresentationKey(persisted.feedbackPresentationKey);
+    setFeedbackPresentationKey(prepared.feedbackPresentationKey);
     lastSyncedPresentationKeyRef.current =
-      persisted.feedbackPresentationKey ??
-      (persisted.screen === "study-day"
+      prepared.feedbackPresentationKey ??
+      (prepared.screen === "study-day"
         ? getCardPresentationKey({
             cardKey:
-              persisted.session.queue[persisted.session.index]?.cardKey ??
+              prepared.session.queue[prepared.session.index]?.cardKey ??
               "restored",
-            sessionIndex: persisted.session.index,
+            sessionIndex: prepared.session.index,
             isPendingRetry:
-              persisted.session.queue[persisted.session.index]?.isPendingRetry,
-            presentationSequence: persisted.session.gradedPromptCount,
+              prepared.session.queue[prepared.session.index]?.isPendingRetry,
+            presentationSequence: prepared.session.gradedPromptCount,
           })
         : null);
 
-    if (persisted.reviewProfileId) {
-      setReviewProfile(getMuscleProfileById(persisted.reviewProfileId) ?? null);
+    if (prepared.reviewProfileId) {
+      setReviewProfile(getMuscleProfileById(prepared.reviewProfileId) ?? null);
     } else {
       setReviewProfile(null);
     }
 
-    setScreen(persisted.screen);
+    setScreen(prepared.screen);
+  }
+
+  function recoverInvalidStudyPresentation() {
+    if (!studyDaySession || !activeCourse) {
+      setScreen("dashboard");
+      return;
+    }
+
+    const sanitized = sanitizeSameSessionRelearnState(studyDaySession);
+    setStudyDaySession(sanitized);
+    resetSessionStats();
+    proceedToSessionCard(sanitized, activeCourse);
   }
 
   function persistActiveStudySessionState(
@@ -327,6 +358,7 @@ export default function Home() {
       feedbackQueuedCard: QueuedCard | null;
       feedbackPresentationKey: string | null;
       reviewProfile: MuscleProfile | null;
+      obligationProgress: StudyDayObligationProgress | null;
     }> = {},
   ) {
     const session = overrides.session ?? studyDaySession;
@@ -365,6 +397,10 @@ export default function Home() {
         feedbackPresentationKey:
           overrides.feedbackPresentationKey ?? feedbackPresentationKey,
         reviewProfileId: (overrides.reviewProfile ?? reviewProfile)?.id ?? null,
+        obligationProgress:
+          overrides.obligationProgress ??
+          obligationProgress ??
+          undefined,
       }),
     );
   }
@@ -410,6 +446,7 @@ export default function Home() {
     feedbackPresentationKey,
     currentMuscleIndex,
     reviewProfile,
+    obligationProgress,
   ]);
 
   function resetSessionStats() {
@@ -433,6 +470,7 @@ export default function Home() {
 
   function resetStudyDaySession() {
     setStudyDaySession(null);
+    setObligationProgress(null);
   }
 
   function resetReviewSession() {
@@ -478,16 +516,27 @@ export default function Home() {
   }
 
   function proceedToSessionCard(session: SameSessionRelearnState, course: Course) {
+    const sanitized = sanitizeSameSessionRelearnState(session);
+    const currentCard = getCurrentSessionCard(sanitized);
+
+    if (!currentCard && sanitized.unresolvedKeys.length > 0) {
+      setStudyDaySession(sanitized);
+      setScreen("study-day");
+      return;
+    }
+
     const briefMuscleId = getBriefMuscleIdForSessionIndex(
-      session.queue,
-      session.index,
+      sanitized.queue,
+      sanitized.index,
     );
 
     if (briefMuscleId) {
+      setStudyDaySession(sanitized);
       openBriefForMuscleId(course, briefMuscleId);
       return;
     }
 
+    setStudyDaySession(sanitized);
     setScreen(isMixedReviewFlow ? "mixed-review" : "study-day");
   }
 
@@ -579,22 +628,29 @@ export default function Home() {
     clearActiveStudySession();
 
     const masteryStore = readMasteryProgress();
+    const workloadPlan = planDailyWorkload(course, courseProgress, masteryStore);
+
+    if (workloadPlan.plannedPromptCount === 0) {
+      return;
+    }
+
+    introduceNewMusclesForSession(course, workloadPlan.newMuscleAllowance);
+    resetSessionStats();
+
     const scheduledQueue = buildStudyDayScheduledQueueForCourse(
       course,
-      masteryStore,
+      readMasteryProgress(),
     );
 
     if (scheduledQueue.length === 0) {
       return;
     }
 
-    const workloadPlan = planDailyWorkload(course, courseProgress, masteryStore);
-
-    introduceNewMusclesForSession(course, workloadPlan.newMuscleAllowance);
-    resetSessionStats();
-
-    const session = createStudyDaySessionFromQueue(scheduledQueue);
+    const { queue: scheduledQueueWithIds, progress } =
+      assignDailyObligationIds(scheduledQueue);
+    const session = createStudyDaySessionFromQueue(scheduledQueueWithIds);
     plannedStaticQueueRef.current = getPlannedStaticQueueFromSession(session);
+    setObligationProgress(progress);
 
     setStudyDaySession(session);
     setActiveCourse(course);
@@ -685,6 +741,18 @@ export default function Home() {
 
     applyGradeToCard(type, activeStudyCard, activeQueuedCard);
 
+    if (!isMixedReviewFlow && obligationProgress) {
+      setObligationProgress((current) =>
+        current
+          ? recordObligationCompletion(
+              current,
+              activeQueuedCard.obligationId,
+              type,
+            )
+          : current,
+      );
+    }
+
     const gradedSession = applySameSessionGrade(
       activeSession,
       activeQueuedCard,
@@ -763,13 +831,27 @@ export default function Home() {
     resetReviewSession();
     resetStudyDaySession();
     resetCourse();
+    hasRestoredSessionRef.current = false;
+    plannedStaticQueueRef.current = [];
     setStudyCards(cards.map((card) => ({ ...card })));
     setScreen("dashboard");
     refreshDashboardStats();
   }
 
+  function handleReturnToDashboardFromError() {
+    if (studyDaySession && activeCourse) {
+      persistActiveStudySessionState();
+    }
+
+    resetReviewSession();
+    resetStudyDaySession();
+    resetCourse();
+    setScreen("dashboard");
+  }
+
   return (
     <PageShell>
+      <StudySessionErrorBoundary onReturnToDashboard={handleReturnToDashboardFromError}>
       {screen === "dashboard" && dashboardCourse && (
         <Dashboard
           currentStudyDay={currentStudyDay}
@@ -828,6 +910,24 @@ export default function Home() {
         />
       )}
 
+      {screen === "study-day" &&
+        activeSession &&
+        activeCourse &&
+        !activeStudyCard && (
+          <Card className="space-y-4 text-center">
+            <h2 className="text-xl font-semibold text-text-primary">
+              Restoring your place
+            </h2>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              The current card could not be displayed safely. Recover your saved
+              session to continue studying.
+            </p>
+            <Button fullWidth onClick={recoverInvalidStudyPresentation}>
+              Recover Session
+            </Button>
+          </Card>
+        )}
+
       {screen === "study-day" && activeStudyCard && activeSession && activeCourse && (
         <StudySession
           key={studySessionPresentationKey}
@@ -836,6 +936,8 @@ export default function Home() {
           answer={activeStudyCard.answer}
           answerShown={answerShown}
           feedbackGrade={feedbackGrade}
+          cardProgressCompleted={studyDayCardProgress?.completed}
+          cardProgressTotal={studyDayCardProgress?.total}
           onShowAnswer={() =>
             setCardFeedback((state) => showCardAnswer(state))
           }
@@ -859,6 +961,7 @@ export default function Home() {
           onReturnToDashboard={handleReturnToDashboard}
         />
       )}
+      </StudySessionErrorBoundary>
     </PageShell>
   );
 }

@@ -5,6 +5,7 @@ import {
 } from "@/src/lib/card-progress-key";
 import type { Grade } from "@/src/lib/progress.types";
 import type { QueuedCard } from "@/src/lib/review-queue";
+import { annotateAttachmentPairRetryObligationIds } from "@/src/lib/study-day-obligation-progress";
 
 export const DAILY_GRADED_PROMPT_CAP = 40;
 
@@ -191,7 +192,7 @@ export function countPendingRetriesForCard(
   ).length;
 }
 
-function countPendingRetriesForPair(
+export function countPendingRetriesForPair(
   queue: QueuedCard[],
   attachmentPairId: string,
 ): number {
@@ -223,8 +224,120 @@ export function areAttachmentPairsAdjacent(queue: QueuedCard[]): boolean {
   return true;
 }
 
-function shouldAppendRetry(_state: SameSessionRelearnState): boolean {
+function shouldAppendRetry(state: SameSessionRelearnState): boolean {
   return true;
+}
+
+export function dedupePendingRetriesInQueue(queue: QueuedCard[]): QueuedCard[] {
+  const lastSingleRetryIndex = new Map<CardProgressKey, number>();
+  const lastPairRetryIndexes = new Map<string, [number, number]>();
+
+  for (let index = 0; index < queue.length; index += 1) {
+    const card = queue[index];
+
+    if (!card.isPendingRetry) {
+      continue;
+    }
+
+    if (card.attachmentPairId) {
+      const next = queue[index + 1];
+
+      if (
+        next?.isPendingRetry &&
+        next.attachmentPairId === card.attachmentPairId
+      ) {
+        lastPairRetryIndexes.set(card.attachmentPairId, [index, index + 1]);
+        index += 1;
+      }
+
+      continue;
+    }
+
+    lastSingleRetryIndex.set(card.cardKey, index);
+  }
+
+  const indexesToKeep = new Set<number>();
+
+  for (const index of lastSingleRetryIndex.values()) {
+    indexesToKeep.add(index);
+  }
+
+  for (const [firstIndex, secondIndex] of lastPairRetryIndexes.values()) {
+    indexesToKeep.add(firstIndex);
+    indexesToKeep.add(secondIndex);
+  }
+
+  return queue.filter(
+    (card, index) =>
+      !card.isPendingRetry ||
+      !(
+        (card.attachmentPairId &&
+          lastPairRetryIndexes.has(card.attachmentPairId)) ||
+        lastSingleRetryIndex.has(card.cardKey)
+      ) ||
+      indexesToKeep.has(index),
+  );
+}
+
+export function findPresentableSessionIndex(
+  state: SameSessionRelearnState,
+): number | null {
+  const { queue } = state;
+
+  if (queue.length === 0) {
+    return null;
+  }
+
+  if (state.unresolvedKeys.length === 0 && state.index >= queue.length) {
+    return null;
+  }
+
+  if (state.index >= 0 && state.index < queue.length) {
+    return state.index;
+  }
+
+  for (let index = 0; index < queue.length; index += 1) {
+    const card = queue[index];
+
+    if (card?.isPendingRetry) {
+      return index;
+    }
+  }
+
+  for (const key of state.unresolvedKeys) {
+    const unresolvedIndex = queue.findIndex((card) => card.cardKey === key);
+
+    if (unresolvedIndex >= 0) {
+      return unresolvedIndex;
+    }
+  }
+
+  return queue.length - 1;
+}
+
+export function hasValidPresentableIndex(state: SameSessionRelearnState): boolean {
+  return findPresentableSessionIndex(state) !== null;
+}
+
+export function sanitizeSameSessionRelearnState(
+  state: SameSessionRelearnState,
+): SameSessionRelearnState {
+  const queue = dedupePendingRetriesInQueue(state.queue);
+  const presentableIndex = findPresentableSessionIndex({ ...state, queue });
+
+  if (presentableIndex === null) {
+    return {
+      ...state,
+      queue,
+      index: Math.max(state.index, queue.length),
+    };
+  }
+
+  return {
+    ...state,
+    queue,
+    index: presentableIndex,
+  };
 }
 
 function applyCapAfterGrade(
@@ -312,7 +425,12 @@ function handleMissedGrade(
   if (gradedCard.attachmentPairId) {
     const pairId = gradedCard.attachmentPairId;
     let queue = removePendingRetriesForPair(state.queue, pairId);
-    const retryCards = buildAttachmentPairRetryCards(gradedCard, random);
+    const retryCards = annotateAttachmentPairRetryObligationIds(
+      buildAttachmentPairRetryCards(gradedCard, random),
+      queue,
+      state.initialQueueLength,
+      gradedCard,
+    );
 
     if (shouldAppendRetry(state)) {
       queue = appendPendingRetryAtEnd(queue, retryCards);
@@ -375,19 +493,23 @@ export function applySameSessionGrade(
   };
 
   if (grade === "correct") {
-    return handleCorrectGrade(nextState, gradedCard);
+    return sanitizeSameSessionRelearnState(
+      handleCorrectGrade(nextState, gradedCard),
+    );
   }
 
-  return handleMissedGrade(nextState, gradedCard, random);
+  return sanitizeSameSessionRelearnState(
+    handleMissedGrade(nextState, gradedCard, random),
+  );
 }
 
 export function advanceSameSessionIndex(
   state: SameSessionRelearnState,
 ): SameSessionRelearnState {
-  return {
+  return sanitizeSameSessionRelearnState({
     ...state,
     index: state.index + 1,
-  };
+  });
 }
 
 export function isSameSessionRelearnComplete(

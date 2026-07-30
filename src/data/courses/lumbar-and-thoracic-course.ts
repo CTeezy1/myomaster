@@ -9,7 +9,6 @@ export const lumbarAndThoracicCourse: Course = {
     "erector-spinae",
     "rotatores",
     "quadratus-lumborum",
-    "lumbar-and-thoracic-psoas-major",
     "transversus-abdominis",
     "internal-oblique",
     "rectus-abdominis",

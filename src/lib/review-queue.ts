@@ -12,6 +12,7 @@ export interface QueuedCard {
   attachmentPairId?: string;
   isPendingRetry?: boolean;
   isPractice?: boolean;
+  obligationId?: string;
 }
 
 export type ReviewUnit =

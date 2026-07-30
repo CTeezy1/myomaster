@@ -10,6 +10,8 @@ type StudySessionProps = {
   answer: string;
   answerShown: boolean;
   feedbackGrade: FeedbackGrade | null;
+  cardProgressCompleted?: number;
+  cardProgressTotal?: number;
   onShowAnswer: () => void;
   onGrade: (type: "correct" | "partial" | "incorrect") => void;
   onReviewBrief: () => void;
@@ -23,16 +25,41 @@ export function StudySession({
   answer,
   answerShown,
   feedbackGrade,
+  cardProgressCompleted,
+  cardProgressTotal,
   onShowAnswer,
   onGrade,
   onReviewBrief,
   onContinue,
 }: StudySessionProps) {
   const gradeLocked = feedbackGrade !== null;
+  const showCardProgress =
+    cardProgressTotal !== undefined && cardProgressCompleted !== undefined;
+  const progressPercent =
+    showCardProgress && cardProgressTotal > 0
+      ? (cardProgressCompleted / cardProgressTotal) * 100
+      : 0;
 
   return (
     <div className="w-full">
       <Card className="space-y-7">
+        {showCardProgress ? (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-text-muted">
+              Card {cardProgressCompleted} of {cardProgressTotal}
+            </p>
+            <div
+              className="h-1 w-full overflow-hidden rounded-full bg-surface-muted"
+              aria-hidden="true"
+            >
+              <div
+                className="h-full rounded-full bg-brand-600 transition-[width] duration-200"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        ) : null}
+
         {moduleName ? (
           <p className="text-sm font-semibold tracking-tight text-brand-700">
             {moduleName}

@@ -6,14 +6,18 @@ import {
 } from "@/src/lib/course-progress";
 import type { CourseProgress } from "@/src/lib/progress.types";
 import type { CardFeedbackState } from "@/src/lib/quiz-card-state";
-import type { QueuedCard } from "@/src/lib/review-queue";
+import type { StudyDayObligationProgress } from "@/src/lib/study-day-obligation-progress";
+import { createObligationProgressFromSession } from "@/src/lib/study-day-obligation-progress";
 import {
+  hasValidPresentableIndex,
   isSameSessionRelearnComplete,
+  sanitizeSameSessionRelearnState,
   type SameSessionRelearnState,
 } from "@/src/lib/same-session-relearn";
+import type { QueuedCard } from "@/src/lib/review-queue";
 
 export const ACTIVE_STUDY_SESSION_STORAGE_KEY = "myomaster-active-study-session";
-export const ACTIVE_STUDY_SESSION_VERSION = 1 as const;
+export const ACTIVE_STUDY_SESSION_VERSION = 2 as const;
 
 export type ActiveStudyScreen = "brief" | "study-day" | "brief-review";
 
@@ -30,6 +34,7 @@ export type PersistedActiveStudySession = {
   feedbackQueuedCard: QueuedCard | null;
   feedbackPresentationKey: string | null;
   reviewProfileId: string | null;
+  obligationProgress: StudyDayObligationProgress;
 };
 
 const CARD_CATEGORIES = new Set(["origin", "insertion", "action", "innervation"]);
@@ -72,6 +77,31 @@ function isQueuedCard(value: unknown): value is QueuedCard {
   }
 
   if (value.isPractice !== undefined && typeof value.isPractice !== "boolean") {
+    return false;
+  }
+
+  if (value.obligationId !== undefined && typeof value.obligationId !== "string") {
+    return false;
+  }
+
+  return true;
+}
+
+function isStudyDayObligationProgress(
+  value: unknown,
+): value is StudyDayObligationProgress {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  if (typeof value.total !== "number" || !Number.isInteger(value.total) || value.total < 0) {
+    return false;
+  }
+
+  if (
+    !Array.isArray(value.completedObligationIds) ||
+    !value.completedObligationIds.every((entry) => typeof entry === "string")
+  ) {
     return false;
   }
 
@@ -165,7 +195,8 @@ function parsePersistedActiveStudySession(
     (value.feedbackQueuedCard !== null && !isQueuedCard(value.feedbackQueuedCard)) ||
     (value.feedbackPresentationKey !== null &&
       typeof value.feedbackPresentationKey !== "string") ||
-    (value.reviewProfileId !== null && typeof value.reviewProfileId !== "string")
+    (value.reviewProfileId !== null && typeof value.reviewProfileId !== "string") ||
+    !isStudyDayObligationProgress(value.obligationProgress)
   ) {
     return null;
   }
@@ -247,7 +278,13 @@ export function isResumableActiveStudySession(
     return false;
   }
 
-  if (persisted.session.index > persisted.session.queue.length) {
+  const sanitized = sanitizeSameSessionRelearnState(persisted.session);
+
+  if (!hasValidPresentableIndex(sanitized)) {
+    return false;
+  }
+
+  if (sanitized.index > sanitized.queue.length) {
     return false;
   }
 
@@ -265,7 +302,12 @@ export function createPersistedActiveStudySession(input: {
   feedbackQueuedCard?: QueuedCard | null;
   feedbackPresentationKey?: string | null;
   reviewProfileId?: string | null;
+  obligationProgress?: StudyDayObligationProgress;
 }): PersistedActiveStudySession {
+  const session = sanitizeSameSessionRelearnState(input.session);
+  const obligationProgress =
+    input.obligationProgress ?? createObligationProgressFromSession(session);
+
   return {
     version: ACTIVE_STUDY_SESSION_VERSION,
     courseId: input.courseId,
@@ -273,10 +315,10 @@ export function createPersistedActiveStudySession(input: {
     savedAt: new Date().toISOString(),
     plannedStaticQueue: input.plannedStaticQueue.map((card) => ({ ...card })),
     session: {
-      ...input.session,
-      queue: input.session.queue.map((card) => ({ ...card })),
-      unresolvedKeys: [...input.session.unresolvedKeys],
-      pairCorrectCounts: { ...input.session.pairCorrectCounts },
+      ...session,
+      queue: session.queue.map((card) => ({ ...card })),
+      unresolvedKeys: [...session.unresolvedKeys],
+      pairCorrectCounts: { ...session.pairCorrectCounts },
     },
     screen: input.screen,
     currentMuscleIndex: input.currentMuscleIndex,
@@ -286,6 +328,30 @@ export function createPersistedActiveStudySession(input: {
       : null,
     feedbackPresentationKey: input.feedbackPresentationKey ?? null,
     reviewProfileId: input.reviewProfileId ?? null,
+    obligationProgress: {
+      total: obligationProgress.total,
+      completedObligationIds: [...obligationProgress.completedObligationIds],
+    },
+  };
+}
+
+export function preparePersistedActiveStudySessionForRestore(
+  persisted: PersistedActiveStudySession,
+): PersistedActiveStudySession {
+  const session = sanitizeSameSessionRelearnState(persisted.session);
+
+  return {
+    ...persisted,
+    session: {
+      ...session,
+      queue: session.queue.map((card) => ({ ...card })),
+      unresolvedKeys: [...session.unresolvedKeys],
+      pairCorrectCounts: { ...session.pairCorrectCounts },
+    },
+    obligationProgress: {
+      total: persisted.obligationProgress.total,
+      completedObligationIds: [...persisted.obligationProgress.completedObligationIds],
+    },
   };
 }
 

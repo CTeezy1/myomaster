@@ -75,26 +75,10 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     whyMemoryWorks: "",
   },
   {
-    id: "lumbar-and-thoracic-psoas-major",
-    name: "Psoas major",
-    region: "lumbar-and-thoracic",
-    order: 5,
-    description: "Muscle of the Lumbar and Thoracic",
-    coreFacts: {
-      origin: "T12-L5 vertebrae",
-      insertion: "Lesser trochanter",
-      action: "Hip flexion and slight ER , trunk sidebend (unilateral) trunk flexion (bilateral)",
-      innervation: "L1-L3 anterior rami of spinal nerves",
-    },
-    images: muscleImages("lumbar-and-thoracic", "lumbar-and-thoracic-psoas-major"),
-    memoryStory: "",
-    whyMemoryWorks: "",
-  },
-  {
     id: "transversus-abdominis",
     name: "Transversus abdominis",
     region: "lumbar-and-thoracic",
-    order: 6,
+    order: 5,
     description: "Muscle of the Lumbar and Thoracic",
     coreFacts: {
       origin: "Thoracolumbar fascia, ribs",
@@ -110,7 +94,7 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     id: "internal-oblique",
     name: "Internal oblique",
     region: "lumbar-and-thoracic",
-    order: 7,
+    order: 6,
     description: "Muscle of the Lumbar and Thoracic",
     coreFacts: {
       origin: "Iliac crest",
@@ -126,7 +110,7 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     id: "rectus-abdominis",
     name: "Rectus abdominis",
     region: "lumbar-and-thoracic",
-    order: 8,
+    order: 7,
     description: "Muscle of the Lumbar and Thoracic",
     coreFacts: {
       origin: "Pubic crest",
@@ -142,7 +126,7 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     id: "external-oblique",
     name: "External oblique",
     region: "lumbar-and-thoracic",
-    order: 9,
+    order: 8,
     description: "Muscle of the Lumbar and Thoracic",
     coreFacts: {
       origin: "External surface ribs 5-12",

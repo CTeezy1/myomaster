@@ -1,11 +1,50 @@
-export const WEEKLY_NEW_MUSCLE_TARGETS = [
-  14, 14, 10, 10, 8, 8, 6, 6, 5, 4, 3, 0, 0, 0, 0,
-] as const;
+import { myomasterProgramCourse } from "@/src/data/courses/myomaster-program-course";
 
 export const COURSE_DAYS = 105;
 export const COURSE_WEEKS = 15;
+export const REVIEW_PERIOD_DAYS = 28;
+export const REVIEW_WEEKS = REVIEW_PERIOD_DAYS / 7;
+export const INTRODUCTION_PERIOD_DAYS = COURSE_DAYS - REVIEW_PERIOD_DAYS;
+export const INTRODUCTION_WEEKS = COURSE_WEEKS - REVIEW_WEEKS;
 export const OVERDUE_PROMPT_LIMIT = 40;
 export const ACCURACY_THRESHOLD_PERCENT = 70;
+
+export function buildWeeklyNewMuscleTargets(
+  totalMuscles: number,
+  introductionWeeks: number,
+  courseWeeks: number,
+): number[] {
+  if (introductionWeeks <= 0 || totalMuscles <= 0) {
+    return Array.from({ length: courseWeeks }, () => 0);
+  }
+
+  const weights = Array.from(
+    { length: introductionWeeks },
+    (_, index) => introductionWeeks - index,
+  );
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const introTargets = weights.map((weight) =>
+    Math.floor((totalMuscles * weight) / totalWeight),
+  );
+
+  let remainder =
+    totalMuscles - introTargets.reduce((sum, target) => sum + target, 0);
+
+  for (let index = 0; index < introTargets.length && remainder > 0; index += 1) {
+    introTargets[index] += 1;
+    remainder -= 1;
+  }
+
+  const reviewWeeks = courseWeeks - introductionWeeks;
+
+  return [...introTargets, ...Array.from({ length: reviewWeeks }, () => 0)];
+}
+
+export const WEEKLY_NEW_MUSCLE_TARGETS = buildWeeklyNewMuscleTargets(
+  myomasterProgramCourse.muscleProfileIds.length,
+  INTRODUCTION_WEEKS,
+  COURSE_WEEKS,
+);
 
 function sanitizeNonNegativeInteger(value: number): number {
   if (!Number.isFinite(value)) {
@@ -46,7 +85,7 @@ export function getWeeklyNewMuscleTarget(weekNumber: number): number {
     return 0;
   }
 
-  return WEEKLY_NEW_MUSCLE_TARGETS[weekNumber - 1];
+  return WEEKLY_NEW_MUSCLE_TARGETS[weekNumber - 1] ?? 0;
 }
 
 export function getDailyNewMuscleTarget(

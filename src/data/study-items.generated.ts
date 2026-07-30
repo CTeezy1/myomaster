@@ -414,14 +414,6 @@ export const muscles: Muscle[] = [
   },
   {
     region: "lumbar-and-thoracic",
-    Muscle: "Psoas major",
-    Origin: "T12-L5 vertebrae",
-    Insertion: "Lesser trochanter",
-    Action: "Hip flexion and slight ER , trunk sidebend (unilateral) trunk flexion (bilateral)",
-    Innervation: "L1-L3 anterior rami of spinal nerves",
-  },
-  {
-    region: "lumbar-and-thoracic",
     Muscle: "Transversus abdominis",
     Origin: "Thoracolumbar fascia, ribs",
     Insertion: "Linea alba",
@@ -486,14 +478,6 @@ export const muscles: Muscle[] = [
   },
   {
     region: "hip",
-    Muscle: "Rectus Femoris",
-    Origin: "Anterior Superior Iliac Spine and superior acetabular rim",
-    Insertion: "Tibial tuberosity via patellar tendon",
-    Action: "Hip flexion, knee extension",
-    Innervation: "Femoral nerve L2-L4",
-  },
-  {
-    region: "hip",
     Muscle: "Sartorius",
     Origin: "Anterior Superior Iliac Spine",
     Insertion: "Pes anserine",
@@ -534,27 +518,11 @@ export const muscles: Muscle[] = [
   },
   {
     region: "hip",
-    Muscle: "Biceps Femoris (long head)",
-    Origin: "Ischial tuberosity",
-    Insertion: "head of fibula",
-    Action: "Hip extension, knee flexion",
-    Innervation: "Tibial nerve L5-S2",
-  },
-  {
-    region: "hip",
-    Muscle: "Semitendonosis",
-    Origin: "Ischial tuberosity",
-    Insertion: "Pes anserine",
-    Action: "Hip extension, knee flexion",
-    Innervation: "Tibial nerve L5-S2",
-  },
-  {
-    region: "hip",
-    Muscle: "Semimembranosus",
-    Origin: "Ischial tuberosity",
-    Insertion: "Posterior medial condyle of tibia",
-    Action: "Hip extension, knee flexion",
-    Innervation: "Tibial nerve L5-S2",
+    Muscle: "Pectineus",
+    Origin: "Superior pubic ramus, pectineal line of pubis",
+    Insertion: "Pectineal line of femur",
+    Action: "Hip flexion, adduction",
+    Innervation: "Femoral nerve L2-L3",
   },
   {
     region: "hip",
@@ -2298,45 +2266,13 @@ export const cards: Card[] = [
   {
     id: 197,
     region: "lumbar-and-thoracic",
-    muscle: "Psoas major",
-    category: "Origin",
-    answer: "T12-L5 vertebrae",
-    mastery: 0,
-  },
-  {
-    id: 198,
-    region: "lumbar-and-thoracic",
-    muscle: "Psoas major",
-    category: "Insertion",
-    answer: "Lesser trochanter",
-    mastery: 0,
-  },
-  {
-    id: 199,
-    region: "lumbar-and-thoracic",
-    muscle: "Psoas major",
-    category: "Action",
-    answer: "Hip flexion and slight ER , trunk sidebend (unilateral) trunk flexion (bilateral)",
-    mastery: 0,
-  },
-  {
-    id: 200,
-    region: "lumbar-and-thoracic",
-    muscle: "Psoas major",
-    category: "Innervation",
-    answer: "L1-L3 anterior rami of spinal nerves",
-    mastery: 0,
-  },
-  {
-    id: 201,
-    region: "lumbar-and-thoracic",
     muscle: "Transversus abdominis",
     category: "Origin",
     answer: "Thoracolumbar fascia, ribs",
     mastery: 0,
   },
   {
-    id: 202,
+    id: 198,
     region: "lumbar-and-thoracic",
     muscle: "Transversus abdominis",
     category: "Insertion",
@@ -2344,7 +2280,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 203,
+    id: 199,
     region: "lumbar-and-thoracic",
     muscle: "Transversus abdominis",
     category: "Action",
@@ -2352,7 +2288,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 204,
+    id: 200,
     region: "lumbar-and-thoracic",
     muscle: "Transversus abdominis",
     category: "Innervation",
@@ -2360,7 +2296,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 205,
+    id: 201,
     region: "lumbar-and-thoracic",
     muscle: "Internal oblique",
     category: "Origin",
@@ -2368,7 +2304,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 206,
+    id: 202,
     region: "lumbar-and-thoracic",
     muscle: "Internal oblique",
     category: "Insertion",
@@ -2376,7 +2312,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 207,
+    id: 203,
     region: "lumbar-and-thoracic",
     muscle: "Internal oblique",
     category: "Action",
@@ -2384,7 +2320,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 208,
+    id: 204,
     region: "lumbar-and-thoracic",
     muscle: "Internal oblique",
     category: "Innervation",
@@ -2392,7 +2328,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 209,
+    id: 205,
     region: "lumbar-and-thoracic",
     muscle: "Rectus abdominis",
     category: "Origin",
@@ -2400,7 +2336,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 210,
+    id: 206,
     region: "lumbar-and-thoracic",
     muscle: "Rectus abdominis",
     category: "Insertion",
@@ -2408,7 +2344,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 211,
+    id: 207,
     region: "lumbar-and-thoracic",
     muscle: "Rectus abdominis",
     category: "Action",
@@ -2416,7 +2352,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 212,
+    id: 208,
     region: "lumbar-and-thoracic",
     muscle: "Rectus abdominis",
     category: "Innervation",
@@ -2424,7 +2360,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 213,
+    id: 209,
     region: "lumbar-and-thoracic",
     muscle: "External oblique",
     category: "Origin",
@@ -2432,7 +2368,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 214,
+    id: 210,
     region: "lumbar-and-thoracic",
     muscle: "External oblique",
     category: "Insertion",
@@ -2440,7 +2376,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 215,
+    id: 211,
     region: "lumbar-and-thoracic",
     muscle: "External oblique",
     category: "Action",
@@ -2448,7 +2384,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 216,
+    id: 212,
     region: "lumbar-and-thoracic",
     muscle: "External oblique",
     category: "Innervation",
@@ -2456,7 +2392,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 217,
+    id: 213,
     region: "hip",
     muscle: "Gluteus maximus",
     category: "Origin",
@@ -2464,7 +2400,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 218,
+    id: 214,
     region: "hip",
     muscle: "Gluteus maximus",
     category: "Insertion",
@@ -2472,7 +2408,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 219,
+    id: 215,
     region: "hip",
     muscle: "Gluteus maximus",
     category: "Action",
@@ -2480,7 +2416,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 220,
+    id: 216,
     region: "hip",
     muscle: "Gluteus maximus",
     category: "Innervation",
@@ -2488,7 +2424,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 221,
+    id: 217,
     region: "hip",
     muscle: "Gluteus medius",
     category: "Origin",
@@ -2496,7 +2432,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 222,
+    id: 218,
     region: "hip",
     muscle: "Gluteus medius",
     category: "Insertion",
@@ -2504,7 +2440,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 223,
+    id: 219,
     region: "hip",
     muscle: "Gluteus medius",
     category: "Action",
@@ -2512,7 +2448,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 224,
+    id: 220,
     region: "hip",
     muscle: "Gluteus medius",
     category: "Innervation",
@@ -2520,7 +2456,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 225,
+    id: 221,
     region: "hip",
     muscle: "Gluteus minimus",
     category: "Origin",
@@ -2528,7 +2464,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 226,
+    id: 222,
     region: "hip",
     muscle: "Gluteus minimus",
     category: "Insertion",
@@ -2536,7 +2472,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 227,
+    id: 223,
     region: "hip",
     muscle: "Gluteus minimus",
     category: "Action",
@@ -2544,7 +2480,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 228,
+    id: 224,
     region: "hip",
     muscle: "Gluteus minimus",
     category: "Innervation",
@@ -2552,7 +2488,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 229,
+    id: 225,
     region: "hip",
     muscle: "Tensor fasciae latae",
     category: "Origin",
@@ -2560,7 +2496,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 230,
+    id: 226,
     region: "hip",
     muscle: "Tensor fasciae latae",
     category: "Insertion",
@@ -2568,7 +2504,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 231,
+    id: 227,
     region: "hip",
     muscle: "Tensor fasciae latae",
     category: "Action",
@@ -2576,7 +2512,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 232,
+    id: 228,
     region: "hip",
     muscle: "Tensor fasciae latae",
     category: "Innervation",
@@ -2584,39 +2520,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 233,
-    region: "hip",
-    muscle: "Rectus Femoris",
-    category: "Origin",
-    answer: "Anterior Superior Iliac Spine and superior acetabular rim",
-    mastery: 0,
-  },
-  {
-    id: 234,
-    region: "hip",
-    muscle: "Rectus Femoris",
-    category: "Insertion",
-    answer: "Tibial tuberosity via patellar tendon",
-    mastery: 0,
-  },
-  {
-    id: 235,
-    region: "hip",
-    muscle: "Rectus Femoris",
-    category: "Action",
-    answer: "Hip flexion, knee extension",
-    mastery: 0,
-  },
-  {
-    id: 236,
-    region: "hip",
-    muscle: "Rectus Femoris",
-    category: "Innervation",
-    answer: "Femoral nerve L2-L4",
-    mastery: 0,
-  },
-  {
-    id: 237,
+    id: 229,
     region: "hip",
     muscle: "Sartorius",
     category: "Origin",
@@ -2624,7 +2528,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 238,
+    id: 230,
     region: "hip",
     muscle: "Sartorius",
     category: "Insertion",
@@ -2632,7 +2536,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 239,
+    id: 231,
     region: "hip",
     muscle: "Sartorius",
     category: "Action",
@@ -2640,7 +2544,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 240,
+    id: 232,
     region: "hip",
     muscle: "Sartorius",
     category: "Innervation",
@@ -2648,7 +2552,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 241,
+    id: 233,
     region: "hip",
     muscle: "Piriformis",
     category: "Origin",
@@ -2656,7 +2560,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 242,
+    id: 234,
     region: "hip",
     muscle: "Piriformis",
     category: "Insertion",
@@ -2664,7 +2568,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 243,
+    id: 235,
     region: "hip",
     muscle: "Piriformis",
     category: "Action",
@@ -2672,7 +2576,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 244,
+    id: 236,
     region: "hip",
     muscle: "Piriformis",
     category: "Innervation",
@@ -2680,7 +2584,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 245,
+    id: 237,
     region: "hip",
     muscle: "Adductor Longus",
     category: "Origin",
@@ -2688,7 +2592,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 246,
+    id: 238,
     region: "hip",
     muscle: "Adductor Longus",
     category: "Insertion",
@@ -2696,7 +2600,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 247,
+    id: 239,
     region: "hip",
     muscle: "Adductor Longus",
     category: "Action",
@@ -2704,7 +2608,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 248,
+    id: 240,
     region: "hip",
     muscle: "Adductor Longus",
     category: "Innervation",
@@ -2712,7 +2616,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 249,
+    id: 241,
     region: "hip",
     muscle: "Adductor Magus",
     category: "Origin",
@@ -2720,7 +2624,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 250,
+    id: 242,
     region: "hip",
     muscle: "Adductor Magus",
     category: "Insertion",
@@ -2728,7 +2632,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 251,
+    id: 243,
     region: "hip",
     muscle: "Adductor Magus",
     category: "Action",
@@ -2736,7 +2640,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 252,
+    id: 244,
     region: "hip",
     muscle: "Adductor Magus",
     category: "Innervation",
@@ -2744,7 +2648,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 253,
+    id: 245,
     region: "hip",
     muscle: "Adductor Brevis",
     category: "Origin",
@@ -2752,7 +2656,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 254,
+    id: 246,
     region: "hip",
     muscle: "Adductor Brevis",
     category: "Insertion",
@@ -2760,7 +2664,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 255,
+    id: 247,
     region: "hip",
     muscle: "Adductor Brevis",
     category: "Action",
@@ -2768,7 +2672,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 256,
+    id: 248,
     region: "hip",
     muscle: "Adductor Brevis",
     category: "Innervation",
@@ -2776,103 +2680,39 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 257,
+    id: 249,
     region: "hip",
-    muscle: "Biceps Femoris (long head)",
+    muscle: "Pectineus",
     category: "Origin",
-    answer: "Ischial tuberosity",
+    answer: "Superior pubic ramus, pectineal line of pubis",
     mastery: 0,
   },
   {
-    id: 258,
+    id: 250,
     region: "hip",
-    muscle: "Biceps Femoris (long head)",
+    muscle: "Pectineus",
     category: "Insertion",
-    answer: "head of fibula",
+    answer: "Pectineal line of femur",
     mastery: 0,
   },
   {
-    id: 259,
+    id: 251,
     region: "hip",
-    muscle: "Biceps Femoris (long head)",
+    muscle: "Pectineus",
     category: "Action",
-    answer: "Hip extension, knee flexion",
+    answer: "Hip flexion, adduction",
     mastery: 0,
   },
   {
-    id: 260,
+    id: 252,
     region: "hip",
-    muscle: "Biceps Femoris (long head)",
+    muscle: "Pectineus",
     category: "Innervation",
-    answer: "Tibial nerve L5-S2",
+    answer: "Femoral nerve L2-L3",
     mastery: 0,
   },
   {
-    id: 261,
-    region: "hip",
-    muscle: "Semitendonosis",
-    category: "Origin",
-    answer: "Ischial tuberosity",
-    mastery: 0,
-  },
-  {
-    id: 262,
-    region: "hip",
-    muscle: "Semitendonosis",
-    category: "Insertion",
-    answer: "Pes anserine",
-    mastery: 0,
-  },
-  {
-    id: 263,
-    region: "hip",
-    muscle: "Semitendonosis",
-    category: "Action",
-    answer: "Hip extension, knee flexion",
-    mastery: 0,
-  },
-  {
-    id: 264,
-    region: "hip",
-    muscle: "Semitendonosis",
-    category: "Innervation",
-    answer: "Tibial nerve L5-S2",
-    mastery: 0,
-  },
-  {
-    id: 265,
-    region: "hip",
-    muscle: "Semimembranosus",
-    category: "Origin",
-    answer: "Ischial tuberosity",
-    mastery: 0,
-  },
-  {
-    id: 266,
-    region: "hip",
-    muscle: "Semimembranosus",
-    category: "Insertion",
-    answer: "Posterior medial condyle of tibia",
-    mastery: 0,
-  },
-  {
-    id: 267,
-    region: "hip",
-    muscle: "Semimembranosus",
-    category: "Action",
-    answer: "Hip extension, knee flexion",
-    mastery: 0,
-  },
-  {
-    id: 268,
-    region: "hip",
-    muscle: "Semimembranosus",
-    category: "Innervation",
-    answer: "Tibial nerve L5-S2",
-    mastery: 0,
-  },
-  {
-    id: 269,
+    id: 253,
     region: "hip",
     muscle: "Psoas Major",
     category: "Origin",
@@ -2880,7 +2720,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 270,
+    id: 254,
     region: "hip",
     muscle: "Psoas Major",
     category: "Insertion",
@@ -2888,7 +2728,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 271,
+    id: 255,
     region: "hip",
     muscle: "Psoas Major",
     category: "Action",
@@ -2896,7 +2736,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 272,
+    id: 256,
     region: "hip",
     muscle: "Psoas Major",
     category: "Innervation",
@@ -2904,7 +2744,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 273,
+    id: 257,
     region: "hip",
     muscle: "Iliacus",
     category: "Origin",
@@ -2912,7 +2752,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 274,
+    id: 258,
     region: "hip",
     muscle: "Iliacus",
     category: "Insertion",
@@ -2920,7 +2760,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 275,
+    id: 259,
     region: "hip",
     muscle: "Iliacus",
     category: "Action",
@@ -2928,7 +2768,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 276,
+    id: 260,
     region: "hip",
     muscle: "Iliacus",
     category: "Innervation",
@@ -2936,7 +2776,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 277,
+    id: 261,
     region: "knee",
     muscle: "Rectus femoris",
     category: "Origin",
@@ -2944,7 +2784,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 278,
+    id: 262,
     region: "knee",
     muscle: "Rectus femoris",
     category: "Insertion",
@@ -2952,7 +2792,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 279,
+    id: 263,
     region: "knee",
     muscle: "Rectus femoris",
     category: "Action",
@@ -2960,7 +2800,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 280,
+    id: 264,
     region: "knee",
     muscle: "Rectus femoris",
     category: "Innervation",
@@ -2968,7 +2808,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 281,
+    id: 265,
     region: "knee",
     muscle: "Vastus medialis",
     category: "Origin",
@@ -2976,7 +2816,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 282,
+    id: 266,
     region: "knee",
     muscle: "Vastus medialis",
     category: "Insertion",
@@ -2984,7 +2824,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 283,
+    id: 267,
     region: "knee",
     muscle: "Vastus medialis",
     category: "Action",
@@ -2992,7 +2832,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 284,
+    id: 268,
     region: "knee",
     muscle: "Vastus medialis",
     category: "Innervation",
@@ -3000,7 +2840,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 285,
+    id: 269,
     region: "knee",
     muscle: "Vastus lateralis",
     category: "Origin",
@@ -3008,7 +2848,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 286,
+    id: 270,
     region: "knee",
     muscle: "Vastus lateralis",
     category: "Insertion",
@@ -3016,7 +2856,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 287,
+    id: 271,
     region: "knee",
     muscle: "Vastus lateralis",
     category: "Action",
@@ -3024,7 +2864,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 288,
+    id: 272,
     region: "knee",
     muscle: "Vastus lateralis",
     category: "Innervation",
@@ -3032,7 +2872,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 289,
+    id: 273,
     region: "knee",
     muscle: "Vastus Intermedialis",
     category: "Origin",
@@ -3040,7 +2880,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 290,
+    id: 274,
     region: "knee",
     muscle: "Vastus Intermedialis",
     category: "Insertion",
@@ -3048,7 +2888,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 291,
+    id: 275,
     region: "knee",
     muscle: "Vastus Intermedialis",
     category: "Action",
@@ -3056,7 +2896,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 292,
+    id: 276,
     region: "knee",
     muscle: "Vastus Intermedialis",
     category: "Innervation",
@@ -3064,7 +2904,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 293,
+    id: 277,
     region: "knee",
     muscle: "Biceps femoris (short head)",
     category: "Origin",
@@ -3072,7 +2912,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 294,
+    id: 278,
     region: "knee",
     muscle: "Biceps femoris (short head)",
     category: "Insertion",
@@ -3080,7 +2920,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 295,
+    id: 279,
     region: "knee",
     muscle: "Biceps femoris (short head)",
     category: "Action",
@@ -3088,7 +2928,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 296,
+    id: 280,
     region: "knee",
     muscle: "Biceps femoris (short head)",
     category: "Innervation",
@@ -3096,7 +2936,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 297,
+    id: 281,
     region: "knee",
     muscle: "Semitendinosus",
     category: "Origin",
@@ -3104,7 +2944,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 298,
+    id: 282,
     region: "knee",
     muscle: "Semitendinosus",
     category: "Insertion",
@@ -3112,7 +2952,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 299,
+    id: 283,
     region: "knee",
     muscle: "Semitendinosus",
     category: "Action",
@@ -3120,7 +2960,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 300,
+    id: 284,
     region: "knee",
     muscle: "Semitendinosus",
     category: "Innervation",
@@ -3128,7 +2968,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 301,
+    id: 285,
     region: "knee",
     muscle: "Semimembranosus",
     category: "Origin",
@@ -3136,7 +2976,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 302,
+    id: 286,
     region: "knee",
     muscle: "Semimembranosus",
     category: "Insertion",
@@ -3144,7 +2984,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 303,
+    id: 287,
     region: "knee",
     muscle: "Semimembranosus",
     category: "Action",
@@ -3152,7 +2992,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 304,
+    id: 288,
     region: "knee",
     muscle: "Semimembranosus",
     category: "Innervation",
@@ -3160,7 +3000,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 305,
+    id: 289,
     region: "knee",
     muscle: "Gracilis",
     category: "Origin",
@@ -3168,7 +3008,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 306,
+    id: 290,
     region: "knee",
     muscle: "Gracilis",
     category: "Insertion",
@@ -3176,7 +3016,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 307,
+    id: 291,
     region: "knee",
     muscle: "Gracilis",
     category: "Action",
@@ -3184,7 +3024,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 308,
+    id: 292,
     region: "knee",
     muscle: "Gracilis",
     category: "Innervation",
@@ -3192,7 +3032,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 309,
+    id: 293,
     region: "knee",
     muscle: "Popliteus",
     category: "Origin",
@@ -3200,7 +3040,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 310,
+    id: 294,
     region: "knee",
     muscle: "Popliteus",
     category: "Insertion",
@@ -3208,7 +3048,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 311,
+    id: 295,
     region: "knee",
     muscle: "Popliteus",
     category: "Action",
@@ -3216,7 +3056,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 312,
+    id: 296,
     region: "knee",
     muscle: "Popliteus",
     category: "Innervation",
@@ -3224,7 +3064,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 313,
+    id: 297,
     region: "ankle-and-foot",
     muscle: "Gastrocnemius",
     category: "Origin",
@@ -3232,7 +3072,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 314,
+    id: 298,
     region: "ankle-and-foot",
     muscle: "Gastrocnemius",
     category: "Insertion",
@@ -3240,7 +3080,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 315,
+    id: 299,
     region: "ankle-and-foot",
     muscle: "Gastrocnemius",
     category: "Action",
@@ -3248,7 +3088,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 316,
+    id: 300,
     region: "ankle-and-foot",
     muscle: "Gastrocnemius",
     category: "Innervation",
@@ -3256,7 +3096,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 317,
+    id: 301,
     region: "ankle-and-foot",
     muscle: "Soleus",
     category: "Origin",
@@ -3264,7 +3104,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 318,
+    id: 302,
     region: "ankle-and-foot",
     muscle: "Soleus",
     category: "Insertion",
@@ -3272,7 +3112,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 319,
+    id: 303,
     region: "ankle-and-foot",
     muscle: "Soleus",
     category: "Action",
@@ -3280,7 +3120,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 320,
+    id: 304,
     region: "ankle-and-foot",
     muscle: "Soleus",
     category: "Innervation",
@@ -3288,7 +3128,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 321,
+    id: 305,
     region: "ankle-and-foot",
     muscle: "Tibialis anterior",
     category: "Origin",
@@ -3296,7 +3136,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 322,
+    id: 306,
     region: "ankle-and-foot",
     muscle: "Tibialis anterior",
     category: "Insertion",
@@ -3304,7 +3144,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 323,
+    id: 307,
     region: "ankle-and-foot",
     muscle: "Tibialis anterior",
     category: "Action",
@@ -3312,7 +3152,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 324,
+    id: 308,
     region: "ankle-and-foot",
     muscle: "Tibialis anterior",
     category: "Innervation",
@@ -3320,7 +3160,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 325,
+    id: 309,
     region: "ankle-and-foot",
     muscle: "Tibialis posterior",
     category: "Origin",
@@ -3328,7 +3168,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 326,
+    id: 310,
     region: "ankle-and-foot",
     muscle: "Tibialis posterior",
     category: "Insertion",
@@ -3336,7 +3176,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 327,
+    id: 311,
     region: "ankle-and-foot",
     muscle: "Tibialis posterior",
     category: "Action",
@@ -3344,7 +3184,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 328,
+    id: 312,
     region: "ankle-and-foot",
     muscle: "Tibialis posterior",
     category: "Innervation",
@@ -3352,7 +3192,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 329,
+    id: 313,
     region: "ankle-and-foot",
     muscle: "Fibularis longus",
     category: "Origin",
@@ -3360,7 +3200,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 330,
+    id: 314,
     region: "ankle-and-foot",
     muscle: "Fibularis longus",
     category: "Insertion",
@@ -3368,7 +3208,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 331,
+    id: 315,
     region: "ankle-and-foot",
     muscle: "Fibularis longus",
     category: "Action",
@@ -3376,7 +3216,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 332,
+    id: 316,
     region: "ankle-and-foot",
     muscle: "Fibularis longus",
     category: "Innervation",
@@ -3384,7 +3224,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 333,
+    id: 317,
     region: "ankle-and-foot",
     muscle: "Fibularis brevis",
     category: "Origin",
@@ -3392,7 +3232,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 334,
+    id: 318,
     region: "ankle-and-foot",
     muscle: "Fibularis brevis",
     category: "Insertion",
@@ -3400,7 +3240,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 335,
+    id: 319,
     region: "ankle-and-foot",
     muscle: "Fibularis brevis",
     category: "Action",
@@ -3408,7 +3248,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 336,
+    id: 320,
     region: "ankle-and-foot",
     muscle: "Fibularis brevis",
     category: "Innervation",
@@ -3416,7 +3256,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 337,
+    id: 321,
     region: "ankle-and-foot",
     muscle: "Extensor Hallucis Longus",
     category: "Origin",
@@ -3424,7 +3264,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 338,
+    id: 322,
     region: "ankle-and-foot",
     muscle: "Extensor Hallucis Longus",
     category: "Insertion",
@@ -3432,7 +3272,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 339,
+    id: 323,
     region: "ankle-and-foot",
     muscle: "Extensor Hallucis Longus",
     category: "Action",
@@ -3440,7 +3280,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 340,
+    id: 324,
     region: "ankle-and-foot",
     muscle: "Extensor Hallucis Longus",
     category: "Innervation",
@@ -3448,7 +3288,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 341,
+    id: 325,
     region: "ankle-and-foot",
     muscle: "Extensor Digitorum",
     category: "Origin",
@@ -3456,7 +3296,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 342,
+    id: 326,
     region: "ankle-and-foot",
     muscle: "Extensor Digitorum",
     category: "Insertion",
@@ -3464,7 +3304,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 343,
+    id: 327,
     region: "ankle-and-foot",
     muscle: "Extensor Digitorum",
     category: "Action",
@@ -3472,7 +3312,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 344,
+    id: 328,
     region: "ankle-and-foot",
     muscle: "Extensor Digitorum",
     category: "Innervation",
@@ -3480,7 +3320,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 345,
+    id: 329,
     region: "ankle-and-foot",
     muscle: "Flexor hallucis longus",
     category: "Origin",
@@ -3488,7 +3328,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 346,
+    id: 330,
     region: "ankle-and-foot",
     muscle: "Flexor hallucis longus",
     category: "Insertion",
@@ -3496,7 +3336,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 347,
+    id: 331,
     region: "ankle-and-foot",
     muscle: "Flexor hallucis longus",
     category: "Action",
@@ -3504,7 +3344,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 348,
+    id: 332,
     region: "ankle-and-foot",
     muscle: "Flexor hallucis longus",
     category: "Innervation",
@@ -3512,7 +3352,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 349,
+    id: 333,
     region: "ankle-and-foot",
     muscle: "Flexor Digitorum longus",
     category: "Origin",
@@ -3520,7 +3360,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 350,
+    id: 334,
     region: "ankle-and-foot",
     muscle: "Flexor Digitorum longus",
     category: "Insertion",
@@ -3528,7 +3368,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 351,
+    id: 335,
     region: "ankle-and-foot",
     muscle: "Flexor Digitorum longus",
     category: "Action",
@@ -3536,7 +3376,7 @@ export const cards: Card[] = [
     mastery: 0,
   },
   {
-    id: 352,
+    id: 336,
     region: "ankle-and-foot",
     muscle: "Flexor Digitorum longus",
     category: "Innervation",

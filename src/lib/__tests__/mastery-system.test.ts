@@ -46,10 +46,15 @@ import {
   getMasteredMuscleCount,
 } from "@/src/lib/dashboard-progress";
 import {
+  buildWeeklyNewMuscleTargets,
   getDailyNewMuscleTarget,
   getWeeklyNewMuscleTarget,
+  INTRODUCTION_PERIOD_DAYS,
+  INTRODUCTION_WEEKS,
+  REVIEW_PERIOD_DAYS,
   WEEKLY_NEW_MUSCLE_TARGETS,
 } from "@/src/lib/introduction-policy";
+import { getMuscleProfilesByRegion } from "@/src/data/muscle-profiles";
 import type {
   CardProgress,
   MasteryProgressStore,
@@ -479,23 +484,83 @@ describe("review queue", () => {
   });
 });
 
+function simulatePlannedMuscleIntroductions(totalMuscles: number) {
+  const introductionDays: Record<number, string[]> = {};
+  let introducedThisWeek = 0;
+  let introducedCount = 0;
+  let lastIntroductionDay = 0;
+
+  for (let courseDay = 1; courseDay <= 105; courseDay += 1) {
+    const dayInWeek = ((courseDay - 1) % 7) + 1;
+
+    if (dayInWeek === 1) {
+      introducedThisWeek = 0;
+    }
+
+    const dailyTarget = getDailyNewMuscleTarget(
+      courseDay,
+      introducedThisWeek,
+      0,
+      null,
+    );
+    const remainingMuscles = totalMuscles - introducedCount;
+    const introductionsToday = Math.min(dailyTarget, remainingMuscles);
+
+    if (introductionsToday > 0) {
+      introductionDays[courseDay] = Array.from(
+        { length: introductionsToday },
+        (_, index) => `muscle-${introducedCount + index + 1}`,
+      );
+      introducedCount += introductionsToday;
+      introducedThisWeek += introductionsToday;
+      lastIntroductionDay = courseDay;
+    }
+  }
+
+  return {
+    introductionDays,
+    introducedCount,
+    lastIntroductionDay,
+  };
+}
+
 describe("introduction policy", () => {
-  it("totals exactly 88 muscles across active introduction weeks", () => {
+  const totalCourseMuscles = myomasterProgramCourse.muscleProfileIds.length;
+
+  it("derives the introduction cutoff from the fixed review period", () => {
+    expect(INTRODUCTION_PERIOD_DAYS).toBe(105 - REVIEW_PERIOD_DAYS);
+    expect(INTRODUCTION_WEEKS).toBe(15 - REVIEW_PERIOD_DAYS / 7);
+  });
+
+  it("totals every course muscle across active introduction weeks", () => {
     const total = WEEKLY_NEW_MUSCLE_TARGETS.reduce<number>(
       (sum, target) => sum + target,
       0,
     );
 
-    expect(total).toBe(88);
+    expect(total).toBe(totalCourseMuscles);
+    expect(buildWeeklyNewMuscleTargets(totalCourseMuscles, INTRODUCTION_WEEKS, 15)).toEqual(
+      WEEKLY_NEW_MUSCLE_TARGETS,
+    );
   });
 
-  it("returns zero daily introductions during weeks 12 through 15", () => {
+  it("returns zero daily introductions during the review-only period", () => {
     expect(getDailyNewMuscleTarget(78, 0, 0, null)).toBe(0);
     expect(getDailyNewMuscleTarget(85, 0, 0, null)).toBe(0);
     expect(getDailyNewMuscleTarget(92, 0, 0, null)).toBe(0);
     expect(getDailyNewMuscleTarget(99, 0, 0, null)).toBe(0);
     expect(getWeeklyNewMuscleTarget(12)).toBe(0);
     expect(getWeeklyNewMuscleTarget(15)).toBe(0);
+  });
+
+  it("introduces every muscle exactly once by the end of the introduction period", () => {
+    const simulation = simulatePlannedMuscleIntroductions(totalCourseMuscles);
+
+    expect(simulation.introducedCount).toBe(totalCourseMuscles);
+    expect(simulation.lastIntroductionDay).toBeLessThanOrEqual(
+      INTRODUCTION_PERIOD_DAYS,
+    );
+    expect(simulation.introductionDays[INTRODUCTION_PERIOD_DAYS + 1]).toBeUndefined();
   });
 });
 
@@ -664,7 +729,7 @@ describe("guided scheduling", () => {
       emptyStore(),
     );
 
-    expect(allowance).toBe(2);
+    expect(allowance).toBe(getDailyNewMuscleTarget(1, 0, 0, null));
   });
 
   it("reduces remaining allowance for muscles introduced today", () => {
@@ -875,7 +940,7 @@ describe("study days", () => {
 
     expect(
       getGuidedDailyNewMuscleAllowance(nextDayProgress, muscleIds, store),
-    ).toBe(2);
+    ).toBe(getDailyNewMuscleTarget(2, 2, 0, null));
     expect(
       getCanAdvanceStudyDay(nextDayProgress, muscleIds, store),
     ).toBe(false);
@@ -911,19 +976,56 @@ describe("study days", () => {
 });
 
 describe("curriculum registry", () => {
-  it("registers 88 unique profiles across 8 non-empty courses", () => {
+  const totalCourseMuscles = myomasterProgramCourse.muscleProfileIds.length;
+
+  it("registers unique profiles across 8 non-empty courses", () => {
     const profileIds = allMuscleProfiles.map((profile) => profile.id);
     const courseMuscleIds = allCourses.flatMap(
       (course) => course.muscleProfileIds,
     );
 
-    expect(allMuscleProfiles).toHaveLength(88);
-    expect(new Set(profileIds).size).toBe(88);
+    expect(allMuscleProfiles).toHaveLength(totalCourseMuscles);
+    expect(new Set(profileIds).size).toBe(totalCourseMuscles);
     expect(allCourses.every((course) => course.muscleProfileIds.length > 0)).toBe(
       true,
     );
-    expect(myomasterProgramCourse.muscleProfileIds).toHaveLength(88);
-    expect(courseMuscleIds.length).toBeGreaterThan(88);
+    expect(myomasterProgramCourse.muscleProfileIds).toHaveLength(totalCourseMuscles);
+    expect(new Set(myomasterProgramCourse.muscleProfileIds).size).toBe(
+      totalCourseMuscles,
+    );
+    expect(courseMuscleIds.length).toBeGreaterThan(totalCourseMuscles);
+  });
+
+  it("keeps moved muscles in their canonical regions only", () => {
+    const hipIds = new Set(
+      getMuscleProfilesByRegion("hip").map((profile) => profile.id),
+    );
+    const kneeIds = new Set(
+      getMuscleProfilesByRegion("knee").map((profile) => profile.id),
+    );
+    const lumbarIds = new Set(
+      getMuscleProfilesByRegion("lumbar-and-thoracic").map((profile) => profile.id),
+    );
+
+    expect(hipIds.has("pectineus")).toBe(true);
+    expect(hipIds.has("psoas-major")).toBe(true);
+    expect(lumbarIds.has("psoas-major")).toBe(false);
+
+    expect(kneeIds.has("rectus-femoris")).toBe(true);
+    expect(hipIds.has("rectus-femoris")).toBe(false);
+
+    expect(kneeIds.has("biceps-femoris-short-head")).toBe(true);
+    expect(hipIds.has("biceps-femoris-long-head")).toBe(false);
+
+    expect(kneeIds.has("semitendinosus")).toBe(true);
+    expect(hipIds.has("semitendonosis")).toBe(false);
+
+    expect(kneeIds.has("semimembranosus")).toBe(true);
+    expect(hipIds.has("semimembranosus")).toBe(false);
+  });
+
+  it("contains four flashcards per muscle", () => {
+    expect(cards).toHaveLength(totalCourseMuscles * 4);
   });
 
   it("orders the global program by region and spreadsheet sequence", () => {

@@ -11,7 +11,7 @@ function muscleImages(regionId: string, id: string) {
 
 export const kneeMuscleProfiles: MuscleProfile[] = [
   {
-    id: "knee-rectus-femoris",
+    id: "rectus-femoris",
     name: "Rectus femoris",
     region: "knee",
     order: 1,
@@ -22,7 +22,7 @@ export const kneeMuscleProfiles: MuscleProfile[] = [
       action: "Knee extension, hip flexion",
       innervation: "Femoral nerve L2-L4",
     },
-    images: muscleImages("knee", "knee-rectus-femoris"),
+    images: muscleImages("knee", "rectus-femoris"),
     memoryStory: "",
     whyMemoryWorks: "",
   },
@@ -107,7 +107,7 @@ export const kneeMuscleProfiles: MuscleProfile[] = [
     whyMemoryWorks: "",
   },
   {
-    id: "knee-semimembranosus",
+    id: "semimembranosus",
     name: "Semimembranosus",
     region: "knee",
     order: 7,
@@ -118,7 +118,7 @@ export const kneeMuscleProfiles: MuscleProfile[] = [
       action: "knee flexion, hip extension",
       innervation: "Tibial nerve L5-S2",
     },
-    images: muscleImages("knee", "knee-semimembranosus"),
+    images: muscleImages("knee", "semimembranosus"),
     memoryStory: "",
     whyMemoryWorks: "",
   },
