@@ -23,8 +23,8 @@ export const muscles: Muscle[] = [
   {
     region: "cervical",
     Muscle: "Longus colli",
-    Origin: "C3-T1 Vertebrae",
-    Insertion: "C1-C6 vertebrae",
+    Origin: "C3-T3 ",
+    Insertion: "C1-C6 ",
     Action: "Cervical flexion/stability",
     Innervation: "Anterior rami of spinal nerves C2-C6",
   },
@@ -700,7 +700,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Longus colli",
     category: "Origin",
-    answer: "C3-T1 Vertebrae",
+    answer: "C3-T3",
     mastery: 0,
   },
   {
@@ -708,7 +708,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Longus colli",
     category: "Insertion",
-    answer: "C1-C6 vertebrae",
+    answer: "C1-C6",
     mastery: 0,
   },
   {

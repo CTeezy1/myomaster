@@ -17,8 +17,8 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     order: 1,
     description: "Deep anterior neck flexor and cervical stabilizer",
     coreFacts: {
-      origin: "C1-T3 vertebral bodies",
-      insertion: "C1-C6 vertebrae",
+      origin: "C3-T3",
+      insertion: "C1-C6",
       action: "Cervical flexion/stability",
       innervation: "Anterior rami of spinal nerves C2-C6",
     },

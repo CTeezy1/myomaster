@@ -10,6 +10,7 @@ import {
   courseProgressNeedsMuscleIdMigration,
   migrateCourseProgress,
 } from "@/src/lib/muscle-id-migration";
+import { notifyProgressChanged } from "@/src/lib/progress/progress-sync";
 import type {
   CourseProgress,
   CourseProgressStore,
@@ -295,6 +296,7 @@ function writeStore(store: CourseProgressStore) {
     COURSE_PROGRESS_STORAGE_KEY,
     JSON.stringify(parseCourseProgressStore(store)),
   );
+  notifyProgressChanged();
 }
 
 function writeCourseProgress(progress: CourseProgress) {
@@ -441,6 +443,7 @@ export function clearCourseProgress() {
   }
 
   window.localStorage.removeItem(COURSE_PROGRESS_STORAGE_KEY);
+  notifyProgressChanged({ immediate: true });
 }
 
 export function getCourseProgress(courseId: string): CourseProgress {

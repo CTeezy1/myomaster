@@ -15,6 +15,7 @@ import {
   type SameSessionRelearnState,
 } from "@/src/lib/same-session-relearn";
 import type { QueuedCard } from "@/src/lib/review-queue";
+import { notifyProgressChanged } from "@/src/lib/progress/progress-sync";
 
 export const ACTIVE_STUDY_SESSION_STORAGE_KEY = "myomaster-active-study-session";
 export const ACTIVE_STUDY_SESSION_VERSION = 2 as const;
@@ -233,6 +234,7 @@ export function writeActiveStudySession(
     ACTIVE_STUDY_SESSION_STORAGE_KEY,
     JSON.stringify(session),
   );
+  notifyProgressChanged();
 }
 
 export function clearActiveStudySession(): void {
@@ -241,6 +243,7 @@ export function clearActiveStudySession(): void {
   }
 
   window.localStorage.removeItem(ACTIVE_STUDY_SESSION_STORAGE_KEY);
+  notifyProgressChanged({ immediate: true });
 }
 
 export function isActiveStudySessionComplete(

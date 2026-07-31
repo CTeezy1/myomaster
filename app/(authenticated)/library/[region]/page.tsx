@@ -1,6 +1,5 @@
 import { LibraryNotFound } from "@/app/components/library/LibraryNotFound";
 import { RegionMuscleList } from "@/app/components/library/RegionMuscleList";
-import { PageShell } from "@/app/components/ui/PageShell";
 import { getLibraryRegion } from "@/src/data/library-regions";
 
 type RegionLibraryPageProps = {
@@ -24,9 +23,5 @@ export default async function RegionLibraryPage({
     );
   }
 
-  return (
-    <PageShell>
-      <RegionMuscleList region={region} />
-    </PageShell>
-  );
+  return <RegionMuscleList region={region} />;
 }

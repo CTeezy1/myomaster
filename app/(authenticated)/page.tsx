@@ -8,11 +8,12 @@ import { MuscleBriefScreen } from "@/app/components/MuscleBriefScreen";
 import { SessionComplete } from "@/app/components/SessionComplete";
 import { StudySession } from "@/app/components/StudySession";
 import { StudySessionErrorBoundary } from "@/app/components/StudySessionErrorBoundary";
-import { PageShell } from "@/app/components/ui/PageShell";
 import { Button } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Card";
 import { useDashboardStats } from "@/src/hooks/useDashboardStats";
 import { useMuscleBriefProgress } from "@/src/hooks/useMuscleBriefProgress";
+import { useLearnerProgress } from "@/src/lib/progress/LearnerProgressProvider";
+import { notifyProgressChanged } from "@/src/lib/progress/progress-sync";
 import { DEFAULT_COURSE_ID } from "@/src/config/study-flow";
 import { cards } from "@/src/data/cards";
 import { getMuscleProfileById } from "@/src/data/muscle-profiles";
@@ -187,6 +188,8 @@ function persistQueuedCardGrade(
     if (course) {
       addRecentGrade(course.id, grade);
     }
+
+    notifyProgressChanged({ immediate: true });
   } catch {
     // Ignore storage failures so grading can continue.
   }
@@ -194,7 +197,8 @@ function persistQueuedCardGrade(
 
 export default function Home() {
   const router = useRouter();
-  const { markViewed, resetProgress } = useMuscleBriefProgress();
+  const { markViewed, resetProgress, syncViewedFromStorage } = useMuscleBriefProgress();
+  const { progressState, resetLearningProgressRemote } = useLearnerProgress();
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
   const [currentMuscleIndex, setCurrentMuscleIndex] = useState(0);
@@ -406,7 +410,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    if (hasRestoredSessionRef.current) {
+    if (progressState.status !== "ready") {
       return;
     }
 
@@ -424,12 +428,19 @@ export default function Home() {
         clearActiveStudySession();
       }
 
+      resetStudyDaySession();
+      resetReviewSession();
+      resetCourse();
+      hasRestoredSessionRef.current = true;
       return;
     }
 
     hasRestoredSessionRef.current = true;
     restoreStudySessionFromPersistence(persisted, course);
-  }, []);
+  }, [
+    progressState.status,
+    progressState.status === "ready" ? progressState.hydrationVersion : 0,
+  ]);
 
   useEffect(() => {
     if (!studyDaySession || !activeCourse) {
@@ -561,6 +572,7 @@ export default function Home() {
     clearActiveStudySession();
     setActiveCourse(null);
     refreshDashboardStats();
+    notifyProgressChanged({ immediate: true });
   }
 
   function handleFinishStudyDayComplete(session?: SameSessionRelearnState | null) {
@@ -824,10 +836,18 @@ export default function Home() {
 
     advanceStudyDay(dashboardCourse.id);
     refreshDashboardStats();
+    notifyProgressChanged({ immediate: true });
   }
 
-  function handleResetLearningProgress() {
-    resetProgress();
+  async function handleResetLearningProgress() {
+    const success = await resetLearningProgressRemote();
+
+    if (!success) {
+      return;
+    }
+
+    resetProgress({ clearStorage: false });
+    syncViewedFromStorage();
     resetReviewSession();
     resetStudyDaySession();
     resetCourse();
@@ -850,8 +870,7 @@ export default function Home() {
   }
 
   return (
-    <PageShell>
-      <StudySessionErrorBoundary onReturnToDashboard={handleReturnToDashboardFromError}>
+    <StudySessionErrorBoundary onReturnToDashboard={handleReturnToDashboardFromError}>
       {screen === "dashboard" && dashboardCourse && (
         <Dashboard
           currentStudyDay={currentStudyDay}
@@ -962,6 +981,5 @@ export default function Home() {
         />
       )}
       </StudySessionErrorBoundary>
-    </PageShell>
   );
 }

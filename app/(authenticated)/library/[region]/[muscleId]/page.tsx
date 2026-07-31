@@ -1,6 +1,5 @@
 import { LibraryMuscleBriefView } from "@/app/components/library/LibraryMuscleBriefView";
 import { LibraryNotFound } from "@/app/components/library/LibraryNotFound";
-import { PageShell } from "@/app/components/ui/PageShell";
 import { getMuscleProfileById } from "@/src/data/muscle-profiles";
 import { getLibraryRegion } from "@/src/data/library-regions";
 
@@ -38,12 +37,10 @@ export default async function LibraryMuscleBriefPage({
   }
 
   return (
-    <PageShell>
-      <LibraryMuscleBriefView
-        profile={profile}
-        regionId={region.id}
-        regionName={region.name}
-      />
-    </PageShell>
+    <LibraryMuscleBriefView
+      profile={profile}
+      regionId={region.id}
+      regionName={region.name}
+    />
   );
 }

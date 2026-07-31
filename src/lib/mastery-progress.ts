@@ -8,6 +8,7 @@ import {
   masteryStoreNeedsMuscleIdMigration,
   migrateMasteryProgressStore,
 } from "@/src/lib/muscle-id-migration";
+import { notifyProgressChanged } from "@/src/lib/progress/progress-sync";
 import type {
   CardProgress,
   CreateDefaultCardProgressInput,
@@ -208,6 +209,7 @@ function writeStore(store: MasteryProgressStore) {
     MASTERY_PROGRESS_STORAGE_KEY,
     JSON.stringify(store),
   );
+  notifyProgressChanged();
 }
 
 export function createDefaultCardProgress({
@@ -246,6 +248,7 @@ export function clearMasteryProgress() {
   }
 
   window.localStorage.removeItem(MASTERY_PROGRESS_STORAGE_KEY);
+  notifyProgressChanged({ immediate: true });
 }
 
 export function getCardProgress(

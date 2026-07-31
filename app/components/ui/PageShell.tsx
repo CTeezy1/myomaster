@@ -1,18 +1,37 @@
 import type { ReactNode } from "react";
+import { Button } from "@/app/components/ui/Button";
+import type { CourseSection } from "@/src/lib/profile.types";
+
+type PageShellIdentity = {
+  username: string;
+  section: CourseSection;
+};
 
 type PageShellProps = {
   children: ReactNode;
+  identity?: PageShellIdentity;
+  onLogout?: () => void;
+  isLoggingOut?: boolean;
+  logoutError?: string | null;
+  saveStatusLabel?: string | null;
 };
 
-export function PageShell({ children }: PageShellProps) {
+export function PageShell({
+  children,
+  identity,
+  onLogout,
+  isLoggingOut = false,
+  logoutError = null,
+  saveStatusLabel = null,
+}: PageShellProps) {
   return (
     <div className="min-h-full bg-background">
       <header className="border-b border-border bg-surface/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-6 py-4">
+          <div className="flex min-w-0 items-center gap-3">
             <div
               aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center rounded-[var(--radius)] bg-brand-100 text-brand-700"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius)] bg-brand-100 text-brand-700"
             >
               <svg
                 className="h-5 w-5"
@@ -28,7 +47,7 @@ export function PageShell({ children }: PageShellProps) {
                 />
               </svg>
             </div>
-            <div className="text-left">
+            <div className="min-w-0 text-left">
               <p className="text-lg font-semibold tracking-tight text-text-primary">
                 MyoMaster
               </p>
@@ -37,6 +56,46 @@ export function PageShell({ children }: PageShellProps) {
               </p>
             </div>
           </div>
+
+          {identity ? (
+            <div className="flex shrink-0 flex-col items-end gap-2 text-right">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-text-primary">
+                  {identity.username}
+                </p>
+                <p className="truncate text-xs text-text-muted">
+                  {identity.section}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                {saveStatusLabel ? (
+                  <p
+                    aria-live="polite"
+                    className="text-xs text-text-muted"
+                  >
+                    {saveStatusLabel}
+                  </p>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="px-3 py-1.5 text-xs"
+                  onClick={onLogout}
+                  disabled={isLoggingOut}
+                >
+                  {isLoggingOut ? "Logging Out..." : "Logout"}
+                </Button>
+                {logoutError ? (
+                  <p
+                    aria-live="polite"
+                    className="max-w-40 text-xs text-error-text"
+                  >
+                    {logoutError}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </header>
 

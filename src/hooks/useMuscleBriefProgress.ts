@@ -23,10 +23,17 @@ export function useMuscleBriefProgress() {
     setViewedIds(getViewedMuscleBriefIds());
   }, []);
 
-  const resetProgress = useCallback(() => {
-    clearAllLearningProgress();
-    setViewedIds([]);
+  const resetProgress = useCallback((options?: { clearStorage?: boolean }) => {
+    if (options?.clearStorage !== false) {
+      clearAllLearningProgress();
+    }
+
+    setViewedIds(getViewedMuscleBriefIds());
   }, []);
 
-  return { hasViewed, markViewed, resetProgress };
+  const syncViewedFromStorage = useCallback(() => {
+    setViewedIds(getViewedMuscleBriefIds());
+  }, []);
+
+  return { hasViewed, markViewed, resetProgress, syncViewedFromStorage };
 }

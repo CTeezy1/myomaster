@@ -2,6 +2,7 @@ import {
   migrateViewedMuscleBriefIds,
   viewedMuscleBriefIdsNeedMigration,
 } from "@/src/lib/muscle-id-migration";
+import { notifyProgressChanged } from "@/src/lib/progress/progress-sync";
 
 const STORAGE_KEY = "myomaster-muscle-brief-viewed";
 
@@ -34,6 +35,7 @@ function writeViewedIds(ids: string[]) {
   if (typeof window === "undefined") return;
 
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+  notifyProgressChanged();
 }
 
 export function getViewedMuscleBriefIds(): string[] {
@@ -56,4 +58,5 @@ export function clearMuscleBriefProgress() {
   if (typeof window === "undefined") return;
 
   window.localStorage.removeItem(STORAGE_KEY);
+  notifyProgressChanged({ immediate: true });
 }
