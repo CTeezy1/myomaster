@@ -900,20 +900,22 @@ describe("study days", () => {
     expect(advancedTwice.currentStudyDay).toBe(3);
   });
 
-  it("caps study day advancement at day 105", () => {
+  it("advances from day 105 to day 106 when the current day is complete", () => {
     writeCourseProgressStore({
       version: 1,
       courses: {
         cervical: {
           ...createDefaultCourseProgress("cervical"),
           currentStudyDay: 105,
+          completedStudyDays: [105],
         },
       },
     });
 
-    const capped = advanceStudyDay("cervical");
+    const advanced = advanceStudyDay("cervical");
 
-    expect(capped.currentStudyDay).toBe(105);
+    expect(advanced.currentStudyDay).toBe(106);
+    expect(getCourseProgress("cervical").currentStudyDay).toBe(106);
   });
 
   it("recalculates new-muscle allowance after advancing study day", () => {

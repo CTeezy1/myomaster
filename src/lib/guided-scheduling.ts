@@ -7,7 +7,7 @@ import {
 } from "@/src/lib/course-progress";
 import { CARD_CATEGORIES, buildCardProgressKey } from "@/src/lib/card-progress-key";
 import { getDueReviewPromptCount } from "@/src/lib/dashboard-progress";
-import { getDailyNewMuscleTarget, COURSE_DAYS } from "@/src/lib/introduction-policy";
+import { getDailyNewMuscleTarget } from "@/src/lib/introduction-policy";
 import type { CourseProgress, MasteryProgressStore } from "@/src/lib/progress.types";
 import { applyAdaptiveNewMuscleAllowance } from "@/src/lib/daily-workload-planning";
 
@@ -147,10 +147,5 @@ export function canAdvanceStudyDay(
   _muscleIds: string[],
   _masteryStore: MasteryProgressStore,
 ): boolean {
-  const currentStudyDay = getCurrentStudyDay(courseProgress);
-
-  return (
-    isCurrentStudyDayCompleted(courseProgress) &&
-    currentStudyDay < COURSE_DAYS
-  );
+  return isCurrentStudyDayCompleted(courseProgress);
 }

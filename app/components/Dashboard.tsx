@@ -1,5 +1,6 @@
 import { Button } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Card";
+import { formatStudyDayStatValue } from "@/src/lib/study-day-display";
 
 type DashboardProps = {
   currentStudyDay: number;
@@ -20,9 +21,11 @@ type DashboardProps = {
 function StatItem({
   label,
   value,
+  detail,
 }: {
   label: string;
   value: string | number;
+  detail?: string;
 }) {
   return (
     <div className="rounded-[var(--radius)] border border-border bg-surface-muted px-4 py-3.5">
@@ -30,6 +33,9 @@ function StatItem({
       <p className="mt-1 text-2xl font-semibold tracking-tight text-text-primary">
         {value}
       </p>
+      {detail ? (
+        <p className="mt-1 text-sm font-medium text-text-secondary">{detail}</p>
+      ) : null}
     </div>
   );
 }
@@ -49,6 +55,11 @@ export function Dashboard({
   onOpenMemoryCode,
   onResetLearningProgress,
 }: DashboardProps) {
+  const studyDayDisplay = formatStudyDayStatValue(
+    currentStudyDay,
+    totalStudyDays,
+  );
+
   return (
     <div className="w-full space-y-5">
       <section className="space-y-1.5 text-center sm:text-left">
@@ -65,7 +76,8 @@ export function Dashboard({
           <div className="grid gap-3 sm:grid-cols-2">
             <StatItem
               label="Study Day"
-              value={`${currentStudyDay} of ${totalStudyDays}`}
+              value={studyDayDisplay.primary}
+              detail={studyDayDisplay.secondary}
             />
             <StatItem
               label="Muscles Learned"

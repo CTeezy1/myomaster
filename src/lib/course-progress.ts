@@ -126,11 +126,11 @@ function parseIntroductionStudyDays(value: unknown): Record<string, number> {
 }
 
 function clampStudyDay(studyDay: number): number {
-  if (!Number.isInteger(studyDay)) {
+  if (!Number.isInteger(studyDay) || studyDay < 1) {
     return 1;
   }
 
-  return Math.min(COURSE_DAYS, Math.max(1, studyDay));
+  return studyDay;
 }
 
 function parseCurrentStudyDay(value: unknown): number {
@@ -505,10 +505,7 @@ export function markStudyDayCompleted(
 export function advanceStudyDay(courseId: string): CourseProgress {
   const progress = getCourseProgress(courseId);
 
-  if (
-    progress.currentStudyDay >= COURSE_DAYS ||
-    !isCurrentStudyDayCompleted(progress)
-  ) {
+  if (!isCurrentStudyDayCompleted(progress)) {
     return progress;
   }
 
