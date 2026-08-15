@@ -9,7 +9,7 @@ import {
   getNewMuscleIdsForStudyDay,
 } from "@/src/lib/new-muscle-queue";
 import {
-  buildReviewQueue,
+  buildReviewQueueUpToLimit,
   isUnitReviewEligible,
   shuffleQueueBlocks,
   type QueuedCard,
@@ -53,14 +53,14 @@ function trimPlannedQueueToMax(queue: QueuedCard[]): QueuedCard[] {
     return queue;
   }
 
-  const coreLength = queue.findIndex((card) => card.isPractice);
+  const practiceIndex = queue.findIndex((card) => card.isPractice);
 
-  if (coreLength === -1) {
-    return queue;
+  if (practiceIndex === -1) {
+    return queue.slice(0, MAX_DAILY_GRADED_CARDS);
   }
 
-  const coreQueue = queue.slice(0, coreLength);
-  const practiceQueue = queue.slice(coreLength);
+  const coreQueue = queue.slice(0, practiceIndex);
+  const practiceQueue = queue.slice(practiceIndex);
 
   if (coreQueue.length >= MAX_DAILY_GRADED_CARDS) {
     return coreQueue;
@@ -268,20 +268,29 @@ export function planDailyWorkload(
   const newMuscleQueue = newMuscleIds.flatMap((muscleId) =>
     buildNewMuscleQueuedCards(muscleId),
   );
-  const dueReviewQueue = buildReviewQueue(
+  const reviewCardLimit = Math.max(
+    0,
+    MAX_DAILY_GRADED_CARDS - newMuscleQueue.length,
+  );
+  const { queue: dueReviewQueue, totalDueCount } = buildReviewQueueUpToLimit(
     units,
     masteryStore,
     currentStudyDay,
+    reviewCardLimit,
     random,
   );
-  const mandatoryPromptCount = countQueuedPrompts(dueReviewQueue);
+  const mandatoryPromptCount = totalDueCount;
   const coreQueue = [...newMuscleQueue, ...dueReviewQueue];
   const promptsNeeded = Math.max(0, MIN_DAILY_GRADED_CARDS - coreQueue.length);
+  const practiceCardLimit = Math.max(
+    0,
+    MAX_DAILY_GRADED_CARDS - coreQueue.length,
+  );
   const practiceQueue = selectRandomPracticeCards(
     courseProgress.introducedMuscleIds,
     dueReviewQueue,
     coreQueue,
-    promptsNeeded,
+    Math.min(promptsNeeded, practiceCardLimit),
     random,
   );
   const queue = trimPlannedQueueToMax([...coreQueue, ...practiceQueue]);

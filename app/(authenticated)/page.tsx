@@ -75,6 +75,7 @@ import {
   createSameSessionRelearnState,
   getCurrentSessionCard,
   isSameSessionRelearnComplete,
+  isSameSessionRelearnStateValue,
   sanitizeSameSessionRelearnState,
   type SameSessionRelearnState,
 } from "@/src/lib/same-session-relearn";
@@ -556,13 +557,22 @@ export default function Home() {
     courseId?: string,
   ) {
     const resolvedCourseId = courseId ?? activeCourse?.id;
+    const resolvedSession = isSameSessionRelearnStateValue(session)
+      ? sanitizeSameSessionRelearnState(session)
+      : studyDaySession
+        ? sanitizeSameSessionRelearnState(studyDaySession)
+        : null;
 
     if (resolvedCourseId) {
       markStudyDayCompleted(resolvedCourseId);
 
-      if (session && session.dailyCapReached && session.unresolvedKeys.length > 0) {
-        setCarriedOverRetryKeys(resolvedCourseId, session.unresolvedKeys);
-      } else if (session && session.unresolvedKeys.length === 0) {
+      if (
+        resolvedSession &&
+        resolvedSession.dailyCapReached &&
+        resolvedSession.unresolvedKeys.length > 0
+      ) {
+        setCarriedOverRetryKeys(resolvedCourseId, resolvedSession.unresolvedKeys);
+      } else if (resolvedSession && resolvedSession.unresolvedKeys.length === 0) {
         clearCarriedOverRetryKeys(resolvedCourseId);
       }
     }
@@ -576,7 +586,7 @@ export default function Home() {
   }
 
   function handleFinishStudyDayComplete(session?: SameSessionRelearnState | null) {
-    finishStudyDaySession(session ?? studyDaySession);
+    finishStudyDaySession(session);
     setScreen("dashboard");
   }
 
@@ -969,7 +979,7 @@ export default function Home() {
       {screen === "study-day-complete" && (
         <SessionComplete
           title="Study day complete"
-          onReturnToDashboard={handleFinishStudyDayComplete}
+          onReturnToDashboard={() => handleFinishStudyDayComplete()}
         />
       )}
 

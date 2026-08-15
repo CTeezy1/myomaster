@@ -319,22 +319,59 @@ export function hasValidPresentableIndex(state: SameSessionRelearnState): boolea
   return findPresentableSessionIndex(state) !== null;
 }
 
+export function isSameSessionRelearnStateValue(
+  value: unknown,
+): value is SameSessionRelearnState {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const record = value as Partial<SameSessionRelearnState>;
+
+  return Array.isArray(record.queue);
+}
+
 export function sanitizeSameSessionRelearnState(
   state: SameSessionRelearnState,
 ): SameSessionRelearnState {
-  const queue = dedupePendingRetriesInQueue(state.queue);
-  const presentableIndex = findPresentableSessionIndex({ ...state, queue });
+  const normalized: SameSessionRelearnState = {
+    queue: Array.isArray(state.queue) ? state.queue : [],
+    index: typeof state.index === "number" ? state.index : 0,
+    gradedPromptCount:
+      typeof state.gradedPromptCount === "number" ? state.gradedPromptCount : 0,
+    staticGradedCount:
+      typeof state.staticGradedCount === "number" ? state.staticGradedCount : 0,
+    unresolvedKeys: Array.isArray(state.unresolvedKeys) ? state.unresolvedKeys : [],
+    pairCorrectCounts:
+      state.pairCorrectCounts && typeof state.pairCorrectCounts === "object"
+        ? state.pairCorrectCounts
+        : {},
+    initialQueueLength:
+      typeof state.initialQueueLength === "number"
+        ? state.initialQueueLength
+        : Array.isArray(state.queue)
+          ? state.queue.length
+          : 0,
+    initialStaticQueueLength:
+      typeof state.initialStaticQueueLength === "number"
+        ? state.initialStaticQueueLength
+        : countNonRetryCards(Array.isArray(state.queue) ? state.queue : []),
+    dailyCapReached: state.dailyCapReached === true,
+    enforceDailyCap: state.enforceDailyCap === true,
+  };
+  const queue = dedupePendingRetriesInQueue(normalized.queue);
+  const presentableIndex = findPresentableSessionIndex({ ...normalized, queue });
 
   if (presentableIndex === null) {
     return {
-      ...state,
+      ...normalized,
       queue,
-      index: Math.max(state.index, queue.length),
+      index: Math.max(normalized.index, queue.length),
     };
   }
 
   return {
-    ...state,
+    ...normalized,
     queue,
     index: presentableIndex,
   };

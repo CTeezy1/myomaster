@@ -104,6 +104,7 @@ import {
   shouldShowMuscleBriefForGuidedStudy,
 } from "@/src/lib/guided-first-exposure";
 import {
+  MAX_DAILY_GRADED_CARDS,
   MIN_STARTING_QUEUE,
   planDailyWorkload,
   selectRandomPracticeCards,
@@ -1016,7 +1017,7 @@ describe("curriculum registry", () => {
     expect(kneeIds.has("rectus-femoris")).toBe(true);
     expect(hipIds.has("rectus-femoris")).toBe(false);
 
-    expect(kneeIds.has("biceps-femoris-short-head")).toBe(true);
+    expect(kneeIds.has("biceps-femoris")).toBe(true);
     expect(hipIds.has("biceps-femoris-long-head")).toBe(false);
 
     expect(kneeIds.has("semitendinosus")).toBe(true);
@@ -2011,7 +2012,7 @@ describe("daily workload planning", () => {
     expect(shouldShowWorkloadWarning(40)).toBe(false);
   });
 
-  it("never caps required due review work", () => {
+  it("caps the planned queue at 40 while reporting the full due review count", () => {
     const muscleIds = myomasterProgramCourse.muscleProfileIds.slice(0, 15);
     const store = makeReviewReadyStore(muscleIds, 1);
     const plan = planDailyWorkload(
@@ -2030,7 +2031,8 @@ describe("daily workload planning", () => {
 
     expect(plan.dueReviewPromptCount).toBe(plan.mandatoryPromptCount);
     expect(plan.dueReviewPromptCount).toBeGreaterThan(40);
-    expect(plan.queue.length).toBeGreaterThanOrEqual(plan.dueReviewPromptCount);
+    expect(plan.plannedPromptCount).toBe(MAX_DAILY_GRADED_CARDS);
+    expect(plan.queue.length).toBe(MAX_DAILY_GRADED_CARDS);
   });
 });
 

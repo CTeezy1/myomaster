@@ -9,7 +9,7 @@ export const kneeCourse: Course = {
     "vastus-medialis",
     "vastus-lateralis",
     "vastus-intermedialis",
-    "biceps-femoris-short-head",
+    "biceps-femoris",
     "semitendinosus",
     "semimembranosus",
     "gracilis",

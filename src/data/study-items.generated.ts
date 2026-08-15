@@ -574,7 +574,7 @@ export const muscles: Muscle[] = [
   },
   {
     region: "knee",
-    Muscle: "Biceps femoris (short head)",
+    Muscle: "Biceps femoris",
     Origin: "Ischial tuberosity/femur",
     Insertion: "Fibular head",
     Action: "Knee flexion",
@@ -2906,7 +2906,7 @@ export const cards: Card[] = [
   {
     id: 277,
     region: "knee",
-    muscle: "Biceps femoris (short head)",
+    muscle: "Biceps femoris",
     category: "Origin",
     answer: "Ischial tuberosity/femur",
     mastery: 0,
@@ -2914,7 +2914,7 @@ export const cards: Card[] = [
   {
     id: 278,
     region: "knee",
-    muscle: "Biceps femoris (short head)",
+    muscle: "Biceps femoris",
     category: "Insertion",
     answer: "Fibular head",
     mastery: 0,
@@ -2922,7 +2922,7 @@ export const cards: Card[] = [
   {
     id: 279,
     region: "knee",
-    muscle: "Biceps femoris (short head)",
+    muscle: "Biceps femoris",
     category: "Action",
     answer: "Knee flexion",
     mastery: 0,
@@ -2930,7 +2930,7 @@ export const cards: Card[] = [
   {
     id: 280,
     region: "knee",
-    muscle: "Biceps femoris (short head)",
+    muscle: "Biceps femoris",
     category: "Innervation",
     answer: "Common fibular nerve L5-S2",
     mastery: 0,

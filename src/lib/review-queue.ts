@@ -127,6 +127,29 @@ export function flattenReviewUnits(units: ReviewUnit[]): QueuedCard[] {
   return units.flatMap((unit) => unit.cards);
 }
 
+export function selectReviewUnitsUpToCardLimit(
+  units: ReviewUnit[],
+  maxCards: number,
+): QueuedCard[] {
+  if (maxCards <= 0) {
+    return [];
+  }
+
+  const selected: QueuedCard[] = [];
+
+  for (const unit of units) {
+    const unitCards = flattenReviewUnits([unit]);
+
+    if (selected.length + unitCards.length > maxCards) {
+      continue;
+    }
+
+    selected.push(...unitCards);
+  }
+
+  return selected;
+}
+
 export function buildReviewQueue(
   units: StudyUnit[],
   progressStore: MasteryProgressStore,
@@ -145,6 +168,33 @@ export function buildReviewQueue(
   }
 
   return flattenReviewUnits(shuffleReviewUnits(reviewUnits, random));
+}
+
+export function buildReviewQueueUpToLimit(
+  units: StudyUnit[],
+  progressStore: MasteryProgressStore,
+  currentStudyDay: number,
+  maxCards: number,
+  random: () => number = defaultRandom,
+): { queue: QueuedCard[]; totalDueCount: number } {
+  const reviewUnits = buildDueReviewUnits(
+    units,
+    progressStore,
+    currentStudyDay,
+    random,
+  );
+
+  if (reviewUnits.length === 0) {
+    return { queue: [], totalDueCount: 0 };
+  }
+
+  const shuffledUnits = shuffleReviewUnits(reviewUnits, random);
+  const totalDueCount = flattenReviewUnits(shuffledUnits).length;
+
+  return {
+    queue: selectReviewUnitsUpToCardLimit(shuffledUnits, maxCards),
+    totalDueCount,
+  };
 }
 
 export function buildReviewQueueFromUnits(

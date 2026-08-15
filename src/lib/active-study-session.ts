@@ -133,7 +133,10 @@ function isSameSessionRelearnState(value: unknown): value is SameSessionRelearnS
     return false;
   }
 
-  if (!Array.isArray(value.unresolvedKeys)) {
+  if (
+    value.unresolvedKeys !== undefined &&
+    !Array.isArray(value.unresolvedKeys)
+  ) {
     return false;
   }
 
