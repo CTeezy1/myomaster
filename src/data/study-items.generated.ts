@@ -23,8 +23,8 @@ export const muscles: Muscle[] = [
   {
     region: "cervical",
     Muscle: "Longus colli",
-    Origin: "C3-T3 ",
-    Insertion: "C1-C6 ",
+    Origin: "C3-T1 Vertebrae",
+    Insertion: "C1-C6 vertebrae",
     Action: "Cervical flexion/stability",
     Innervation: "Anterior rami of spinal nerves C2-C6",
   },
@@ -177,7 +177,7 @@ export const muscles: Muscle[] = [
     Muscle: "Upper Trapezius",
     Origin: "External occipital protuberance, nuchal ligament",
     Insertion: "Lateral 1/3 of clavicle",
-    Action: "Scapular retraction and downward rotation, shoulder girdle elevation",
+    Action: "Scapular elevation and upward rotation",
     Innervation: "Spinal Accessory Nerve (CN X1) and spinal nerves C3-C4",
   },
   {
@@ -193,7 +193,7 @@ export const muscles: Muscle[] = [
     Muscle: "Lower Trapezius",
     Origin: "Spinous processes and supraspinous ligaments T4-T12",
     Insertion: "Lateral apex of medial scapular spine",
-    Action: "Scapular Elevation/Retraction/Upward Rotation",
+    Action: "Scapular depression, retraction, and upward rotation",
     Innervation: "Spinal accessory nerve (CN XI) and spinal nerves C3-C4",
   },
   {
@@ -578,7 +578,7 @@ export const muscles: Muscle[] = [
     Origin: "Ischial tuberosity/femur",
     Insertion: "Fibular head",
     Action: "Knee flexion",
-    Innervation: "Common fibular nerve L5-S2",
+    Innervation: "long head: tibial division of sciatic nerve (L5-S2) Short head: common fibular division of sciatic nerve (L5-S2)",
   },
   {
     region: "knee",
@@ -586,7 +586,7 @@ export const muscles: Muscle[] = [
     Origin: "Ischial tuberosity",
     Insertion: "Pes anserine",
     Action: "Knee flexion, hip extension",
-    Innervation: "Tibial nerve L5-S2",
+    Innervation: "tibial division of sciatic nerve (L5-S2)",
   },
   {
     region: "knee",
@@ -594,7 +594,7 @@ export const muscles: Muscle[] = [
     Origin: "Ischial tuberosity",
     Insertion: "Posterior medial condyle of tibia",
     Action: "knee flexion, hip extension",
-    Innervation: "Tibial nerve L5-S2",
+    Innervation: "tibial division of sciatic nerve (L5-S2)",
   },
   {
     region: "knee",
@@ -700,7 +700,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Longus colli",
     category: "Origin",
-    answer: "C3-T3",
+    answer: "C3-T1 Vertebrae",
     mastery: 0,
   },
   {
@@ -708,7 +708,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Longus colli",
     category: "Insertion",
-    answer: "C1-C6",
+    answer: "C1-C6 vertebrae",
     mastery: 0,
   },
   {
@@ -1324,7 +1324,7 @@ export const cards: Card[] = [
     region: "shoulder",
     muscle: "Upper Trapezius",
     category: "Action",
-    answer: "Scapular retraction and downward rotation, shoulder girdle elevation",
+    answer: "Scapular elevation and upward rotation",
     mastery: 0,
   },
   {
@@ -1388,7 +1388,7 @@ export const cards: Card[] = [
     region: "shoulder",
     muscle: "Lower Trapezius",
     category: "Action",
-    answer: "Scapular Elevation/Retraction/Upward Rotation",
+    answer: "Scapular depression, retraction, and upward rotation",
     mastery: 0,
   },
   {
@@ -2932,7 +2932,7 @@ export const cards: Card[] = [
     region: "knee",
     muscle: "Biceps femoris",
     category: "Innervation",
-    answer: "Common fibular nerve L5-S2",
+    answer: "long head: tibial division of sciatic nerve (L5-S2) Short head: common fibular division of sciatic nerve (L5-S2)",
     mastery: 0,
   },
   {
@@ -2964,7 +2964,7 @@ export const cards: Card[] = [
     region: "knee",
     muscle: "Semitendinosus",
     category: "Innervation",
-    answer: "Tibial nerve L5-S2",
+    answer: "tibial division of sciatic nerve (L5-S2)",
     mastery: 0,
   },
   {
@@ -2996,7 +2996,7 @@ export const cards: Card[] = [
     region: "knee",
     muscle: "Semimembranosus",
     category: "Innervation",
-    answer: "Tibial nerve L5-S2",
+    answer: "tibial division of sciatic nerve (L5-S2)",
     mastery: 0,
   },
   {

@@ -24,7 +24,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "flexor-carpi-radialis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarf is underground, representing that flexor carpi radialis is a flexor and inserts on the palmar side of the hand. The watch represents that the muscle acts at the wrist. The peace sign represents insertion on the 2nd and 3rd metacarpals. The foot on the rock pile to the medial side represents that the muscle originates at the medial epicondyle. The blue coloring represents innervation by the median nerve.",
+    ],
   },
   {
     id: "flexor-carpi-ulnaris",
@@ -40,7 +42,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "flexor-carpi-ulnaris"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarf is underground, representing that flexor carpi ulnaris is a flexor and inserts on the palmar side of the hand. The watch represents that the muscle acts at the wrist. The pea on the hand represents insertion on the pisiform. The foot on the rock pile to the medial side represents that the muscle originates at the medial epicondyle. The purple coloring represents innervation by the ulnar nerve.",
+    ],
   },
   {
     id: "extensor-carpi-ulnaris",
@@ -56,7 +60,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "extensor-carpi-ulnaris"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarf is above ground, representing that extensor carpi ulnaris is an extensor and inserts on the dorsal side of the hand. The watch represents that the muscle acts at the wrist. The extended pinkie finger represents insertion on the 5th metacarpal. The red coloring represents innervation by the radial nerve. The foot on the rock pile to the lateral side represents that the muscle originates at the lateral epicondyle.",
+    ],
   },
   {
     id: "extensor-carpi-radialis-longus",
@@ -72,7 +78,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "extensor-carpi-radialis-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarf is above ground, representing that extensor carpi radialis longus is an extensor and inserts on the dorsal side of the hand. The watch represents that the muscle acts at the wrist. The dwarf is tall, representing longus. The pointer finger represents insertion on the 2nd metacarpal. The red coloring represents innervation by the radial nerve.",
+    ],
   },
   {
     id: "extensor-carpi-radialis-brevis",
@@ -88,7 +96,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "extensor-carpi-radialis-brevis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarf is above ground, representing that extensor carpi radialis brevis is an extensor and inserts on the dorsal side of the hand. The watch represents that the muscle acts at the wrist. The dwarf is short, representing brevis. The middle finger represents insertion on the 3rd metacarpal. The red coloring represents innervation by the radial nerve. The foot on the rock pile to the lateral side represents that the muscle originates at the lateral epicondyle.",
+    ],
   },
   {
     id: "wrist-and-hand-extensor-digitorum",
@@ -104,7 +114,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "wrist-and-hand-extensor-digitorum"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The fingers are above ground, representing that extensor digitorum is an extensor and inserts on the dorsal side of the hand. The four finger-shaped characters represent the muscle's action on digits 2–5 and its insertion at the distal fingers. The PIN buckle represents innervation by the posterior interosseous nerve, a division of the radial nerve (red). The foot on the rock pile to the lateral side represents that the muscle originates at the lateral epicondyle.",
+    ],
   },
   {
     id: "extensor-pollicis-longus",
@@ -120,7 +132,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "extensor-pollicis-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The thumb is above ground, representing that extensor pollicis longus is an extensor and inserts on the dorsal side of the hand. The character looks like a thumb, representing the muscle's action on the thumb. The hat at the top of the thumb represents insertion on the distal phalanx of the thumb. The PIN buckle represents innervation by the posterior interosseous nerve, a division of the radial nerve (red).",
+    ],
   },
   {
     id: "extensor-pollicis-brevis",
@@ -136,7 +150,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "extensor-pollicis-brevis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The thumb is above ground, representing that extensor pollicis brevis is an extensor and inserts on the dorsal side of the hand. The character looks like a thumb, representing the muscle's action on the thumb. The helmet positioned lower on the thumb represents insertion on the proximal phalanx of the thumb. The PIN buckle represents innervation by the posterior interosseous nerve, a division of the radial nerve (red).",
+    ],
   },
   {
     id: "abductor-pollicis-longus",
@@ -152,7 +168,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "abductor-pollicis-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The thumb is above ground, representing insertion on the dorsal side of the hand. The thumb positioned sideways represents abduction of the thumb. The hat positioned in the middle represents insertion on the 1st metacarpal. The PIN buckle represents innervation by the posterior interosseous nerve, a division of the radial nerve (red).",
+    ],
   },
   {
     id: "flexor-digitorum-superficialis",
@@ -168,7 +186,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "flexor-digitorum-superficialis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarves are underground, representing that flexor digitorum superficialis is a flexor and inserts on the palmar side of the hand. The four finger-shaped characters represent the muscle's action on digits 2–5. The hats positioned in the middle of the fingers represent insertion on the middle phalanges at the level of the PIP joints. The blue coloring represents innervation by the median nerve.",
+    ],
   },
   {
     id: "flexor-digitorum-profundus",
@@ -184,7 +204,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "flexor-digitorum-profundus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarves are underground, representing that flexor digitorum profundus is a flexor and inserts on the palmar side of the hand. The four finger-shaped characters represent the muscle's action on digits 2–5. The hats at the tops of the fingers represent insertion on the distal phalanges. The lateral half is blue, representing innervation by the median nerve, while the medial half is purple, representing innervation by the ulnar nerve.",
+    ],
   },
   {
     id: "flexor-pollicis-longus",
@@ -200,7 +222,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "flexor-pollicis-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dwarf is underground, representing that flexor pollicis longus is a flexor and inserts on the palmar side of the hand. The character looks like a thumb, representing the muscle's action on the thumb. The hat at the top of the thumb represents insertion on the distal phalanx of the thumb. The blue coloring represents the median nerve, and the AIN buckle represents innervation by the anterior interosseous nerve, a division of the median nerve (blue).",
+    ],
   },
   {
     id: "interossei",
@@ -216,7 +240,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "interossei"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The purple coloring represents innervation by the ulnar nerve. The palmar interossei are below the surface on a PAD, representing Palmar ADduction (PAD). The dorsal interossei are above the surface DABbing, representing Dorsal ABduction (DAB).",
+    ],
   },
   {
     id: "opponens-pollicis",
@@ -232,7 +258,9 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "opponens-pollicis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The thumb holding a pencil represents opposition of the thumb for grasping. The blue coloring represents innervation by the median nerve.",
+    ],
   },
   {
     id: "lumbricals",
@@ -248,6 +276,8 @@ export const wristAndHandMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("wrist-and-hand", "lumbricals"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The hand is shown with MCP flexion and IP extension, representing the action of the lumbricals. The blue and purple coloring represents their split innervation: lumbricals 1 and 2 are innervated by the median nerve (blue), while lumbricals 3 and 4 are innervated by the ulnar nerve (purple).",
+    ],
   },
 ];

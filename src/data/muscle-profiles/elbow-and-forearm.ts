@@ -24,7 +24,9 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "biceps-brachii"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The open door represents elbow flexion. Holding the axe with the elbow flexed and forearm supinated reinforces the biceps' actions of elbow flexion and supination. Yellow represents innervation by the musculocutaneous nerve.",
+    ],
   },
   {
     id: "brachialis",
@@ -40,7 +42,9 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "brachialis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The open door represents elbow flexion. Holding the axe with the elbow flexed and forearm neutral reinforces the brachialis' role in elbow flexion. Yellow represents innervation by the musculocutaneous nerve.",
+    ],
   },
   {
     id: "brachioradialis",
@@ -56,7 +60,9 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "brachioradialis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The open door represents elbow flexion. Holding the sword with the elbow flexed and forearm neutral reinforces the brachioradialis' role in elbow flexion. Red represents innervation by the radial nerve.",
+    ],
   },
   {
     id: "triceps-brachii",
@@ -72,7 +78,9 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "triceps-brachii"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The large knight stands with the door closed and elbow extended, reinforcing the triceps' role in elbow extension. His trident represents the muscle's three heads. Red represents innervation by the radial nerve.",
+    ],
   },
   {
     id: "anconeus",
@@ -88,7 +96,9 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "anconeus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The small child closing the door represents this small elbow extensor assisting with extension. Red represents innervation by the radial nerve.",
+    ],
   },
   {
     id: "supinator",
@@ -104,7 +114,9 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "supinator"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The go-kart represents the forearm, with the hands holding the steering wheel in a supinated position to reinforce forearm supination. Red represents radial nerve innervation via the posterior interosseous nerve.",
+    ],
   },
   {
     id: "pronator-quadratus",
@@ -120,7 +132,9 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "pronator-quadratus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The go-kart represents the forearm, while its square shape represents quadratus. The hands hold the steering wheel in a pronated position to reinforce forearm pronation. Blue represents the median nerve, with the ant symbol representing the anterior interosseous nerve.",
+    ],
   },
   {
     id: "pronator-teres",
@@ -136,6 +150,8 @@ export const elbowAndForearmMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("elbow-and-forearm", "pronator-teres"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The go-kart represents the forearm, while its cylindrical shape represents teres. The hands hold the steering wheel in a pronated position to reinforce forearm pronation. Blue represents innervation by the median nerve.",
+    ],
   },
 ];

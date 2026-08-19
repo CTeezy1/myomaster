@@ -10,7 +10,6 @@ import {
 } from "@/src/lib/muscle-brief-mode";
 import {
   Activity,
-  ChevronDown,
   Flag,
   ImageIcon,
   MapPin,
@@ -18,7 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 
 export type MuscleBriefProps = {
   profile: MuscleProfile;
@@ -206,49 +205,37 @@ function CoreFactsPanel({ profile }: { profile: MuscleProfile }) {
   );
 }
 
-function WhyMemoryWorksSection({
+function WhyMemoryWorksContent({
   content,
 }: {
   content: string | string[];
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const panelId = useId();
+  const bodyClass =
+    "mt-4 text-sm leading-relaxed text-text-primary sm:text-base lg:text-lg";
 
-  return (
-    <div className="mt-6 border-t border-border pt-5">
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        onClick={() => setIsOpen((open) => !open)}
-        className="flex w-full items-center justify-between gap-3 text-left text-sm font-medium text-text-secondary transition-colors hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:text-base"
-      >
-        <span>Why this memory works</span>
-        <ChevronDown
-          aria-hidden="true"
-          size={16}
-          className={cn(
-            "shrink-0 text-text-muted transition-transform duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
-            isOpen && "rotate-180",
-          )}
-        />
-      </button>
+  if (Array.isArray(content)) {
+    if (content.length === 0) {
+      return null;
+    }
 
-      <div
-        id={panelId}
-        className={cn(
-          "grid transition-[grid-template-rows] duration-[var(--duration-normal)] ease-[var(--ease-standard)]",
-          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="pt-4">
-            <FactValue value={content} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    if (content.length === 1) {
+      return <p className={bodyClass}>{content[0]}</p>;
+    }
+
+    return (
+      <ul className={cn(bodyClass, "list-disc space-y-1.5 pl-4")}>
+        {content.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (!content) {
+    return null;
+  }
+
+  return <p className={bodyClass}>{content}</p>;
 }
 
 export function MuscleBrief({
@@ -304,14 +291,11 @@ export function MuscleBrief({
               View the Memory Code →
             </Link>
           </div>
-          <Card className="flex h-full flex-col p-4 sm:p-5 lg:p-6">
+          <Card className="flex flex-col p-4 sm:p-5 lg:p-6">
             <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-              Memory Story
+              Why This Memory Works
             </p>
-            <p className="mt-4 flex-1 text-sm leading-relaxed text-text-primary sm:text-base lg:text-lg">
-              {profile.memoryStory}
-            </p>
-            <WhyMemoryWorksSection content={profile.whyMemoryWorks} />
+            <WhyMemoryWorksContent content={profile.whyMemoryWorks} />
           </Card>
         </div>
 

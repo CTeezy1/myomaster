@@ -24,7 +24,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "supraspinatus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "This rotator cuff mechanic stands above the scapular spine, representing the supraspinous fossa. The power cord from above represents the suprascapular nerve, and his arm pointing to the side reinforces shoulder abduction.",
+    ],
   },
   {
     id: "infraspinatus",
@@ -40,7 +42,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "infraspinatus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "This rotator cuff mechanic is positioned in the infraspinous fossa. The externally rotated arm reinforces the muscle's action. The wire from above (“supra”) indicates innervation by the suprascapular nerve.",
+    ],
   },
   {
     id: "teres-minor",
@@ -56,7 +60,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "teres-minor"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "This alien (“teres”) rotator cuff mechanic has his shoulders externally rotated from an abducted position, reinforcing external rotation. His position beside the lateral scapula represents the muscle's origin, while green symbolizes innervation by the axillary nerve.",
+    ],
   },
   {
     id: "subscapularis",
@@ -72,7 +78,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "subscapularis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "This rotator cuff mechanic is positioned in front of the scapula, representing its origin on the anterior scapula. The arm position reinforces internal rotation. Two power cords connecting from above and below represent the upper and lower subscapular nerves.",
+    ],
   },
   {
     id: "teres-major",
@@ -88,7 +96,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "teres-major"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "This alien (“teres”) superhero has her hands handcuffed behind her back, reinforcing shoulder extension and internal rotation. The submarine setting and electrical cord from below represent innervation by the lower subscapular nerve.",
+    ],
   },
   {
     id: "latissimus-dorsi",
@@ -104,7 +114,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "latissimus-dorsi"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The enormous athlete wearing 68 provides the C6–C8 root cue for the thoracodorsal nerve. Her arms handcuffed behind her back reinforce shoulder extension, adduction, and internal rotation.",
+    ],
   },
   {
     id: "coracobrachialis",
@@ -120,7 +132,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "coracobrachialis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "Yellow represents the musculocutaneous nerve, with a belt marked 57 for nerve roots C5–C7. Her arms are held together in front of her body, reinforcing the coracobrachialis' role in shoulder flexion and adduction.",
+    ],
   },
   {
     id: "deltoid",
@@ -136,7 +150,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "deltoid"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "Green represents the axillary nerve. His three-claw arm represents the anterior, middle, and posterior deltoid and their roles in shoulder flexion, abduction, and extension.",
+    ],
   },
   {
     id: "pectoralis-major",
@@ -152,7 +168,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "pectoralis-major"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "Pectoralis (Latin for breast or chest) major is symbolized by this hero drawing daggers, reinforcing shoulder adduction, flexion, and internal rotation. The headphones represent innervation by the medial and lateral pectoral nerves.",
+    ],
   },
   {
     id: "pectoralis-minor",
@@ -168,7 +186,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "pectoralis-minor"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "Like a water-skier, pectoralis minor pulls the scapula forward into protraction. The single right (“medial”) headphone represents innervation by the medial pectoral nerve.",
+    ],
   },
   {
     id: "serratus-anterior",
@@ -184,7 +204,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "serratus-anterior"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "Serratus anterior is a water-skier pulling the scapula forward into protraction and upward rotation. The saltshaker labeled 57 represents the mnemonic SALT57: Serratus Anterior, Long Thoracic, C5–C7.",
+    ],
   },
   {
     id: "rhomboids",
@@ -200,7 +222,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "rhomboids"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "Rhomboid major and minor are depicted by a man and child fishing together, pulling the scapula toward them into retraction and downward rotation. Their DSN fishing gear represents innervation by the dorsal scapular nerve.",
+    ],
   },
   {
     id: "upper-trapezius",
@@ -211,12 +235,14 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     coreFacts: {
       origin: "External occipital protuberance, nuchal ligament",
       insertion: "Lateral 1/3 of clavicle",
-      action: "Scapular retraction and downward rotation, shoulder girdle elevation",
+      action: "Scapular elevation and upward rotation",
       innervation: "Spinal Accessory Nerve (CN X1) and spinal nerves C3-C4",
     },
     images: muscleImages("shoulder", "upper-trapezius"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The skull-headed fisherman symbolizes the muscle's origin on the skull while pulling on the scapula.",
+    ],
   },
   {
     id: "middle-trapezius",
@@ -232,7 +258,9 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("shoulder", "middle-trapezius"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The spine-headed fisherman symbolizes the muscle's origin on the spinous processes while pulling on the scapula.",
+    ],
   },
   {
     id: "lower-trapezius",
@@ -243,11 +271,13 @@ export const shoulderMuscleProfiles: MuscleProfile[] = [
     coreFacts: {
       origin: "Spinous processes and supraspinous ligaments T4-T12",
       insertion: "Lateral apex of medial scapular spine",
-      action: "Scapular Elevation/Retraction/Upward Rotation",
+      action: "Scapular depression, retraction, and upward rotation",
       innervation: "Spinal accessory nerve (CN XI) and spinal nerves C3-C4",
     },
     images: muscleImages("shoulder", "lower-trapezius"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The spine-headed fisherman symbolizes the muscle's origin on the spinous processes while pulling on the scapula.",
+    ],
   },
 ];
