@@ -14,13 +14,12 @@ import { useDashboardStats } from "@/src/hooks/useDashboardStats";
 import { useMuscleBriefProgress } from "@/src/hooks/useMuscleBriefProgress";
 import { useLearnerProgress } from "@/src/lib/progress/LearnerProgressProvider";
 import { notifyProgressChanged } from "@/src/lib/progress/progress-sync";
-import { DEFAULT_COURSE_ID } from "@/src/config/study-flow";
+import { resolvePinnedStudyCourse } from "@/src/lib/progress/curriculum-assignment";
 import { cards } from "@/src/data/cards";
 import { getMuscleProfileById } from "@/src/data/muscle-profiles";
 import type { MuscleProfile } from "@/src/data/muscle-profile.types";
 import type { Course } from "@/src/lib/course.types";
 import {
-  getCourseById,
   getCourseProfileAtIndex,
   getCourseProfiles,
   getProfileForStudyCard,
@@ -415,7 +414,7 @@ export default function Home() {
       return;
     }
 
-    const course = getCourseById(DEFAULT_COURSE_ID);
+    const course = resolvePinnedStudyCourse();
 
     if (!course) {
       return;
@@ -626,7 +625,7 @@ export default function Home() {
   }
 
   function handleStartStudying() {
-    const course = getCourseById(DEFAULT_COURSE_ID);
+    const course = resolvePinnedStudyCourse();
 
     if (!course) return;
 

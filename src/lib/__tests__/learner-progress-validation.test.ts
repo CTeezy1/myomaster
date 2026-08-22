@@ -63,4 +63,46 @@ describe("parsePersistedLearnerProgress", () => {
       }),
     ).toBeNull();
   });
+
+  it("accepts legacy payloads that omit curriculumId", () => {
+    const parsed = parsePersistedLearnerProgress({
+      schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
+      savedAt: "2026-07-30T00:00:00.000Z",
+      state: {
+        courseProgress: { version: 1, courses: {} },
+        masteryProgress: { version: 1, cards: {} },
+        activeStudySession: null,
+        muscleBriefViewedIds: [],
+      },
+    });
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.curriculumId).toBeUndefined();
+    expect(parsed?.state.curriculumId).toBeUndefined();
+  });
+
+  it("rejects unknown curriculum IDs instead of substituting another curriculum", () => {
+    expect(
+      parsePersistedLearnerProgress({
+        schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
+        savedAt: "2026-07-30T00:00:00.000Z",
+        curriculumId: "upper-first-v2",
+        state: {
+          courseProgress: { version: 1, courses: {} },
+          masteryProgress: { version: 1, cards: {} },
+          activeStudySession: null,
+          muscleBriefViewedIds: [],
+        },
+      }),
+    ).toBeNull();
+    expect(
+      parsePersistedStudyState({
+        courseProgress: { version: 1, courses: {} },
+        masteryProgress: { version: 1, cards: {} },
+        activeStudySession: null,
+        muscleBriefViewedIds: [],
+        curriculumId: "not-a-curriculum",
+      }),
+    ).toBeNull();
+  });
 });

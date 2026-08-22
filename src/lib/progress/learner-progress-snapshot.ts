@@ -22,14 +22,18 @@ import {
   getViewedMuscleBriefIds,
 } from "@/src/lib/muscle-brief-progress";
 import { runWithoutProgressSync } from "@/src/lib/progress/progress-sync";
+import { parseCurriculumId, type CurriculumId } from "@/src/lib/curriculum";
 import {
+  CURRICULUM_ASSIGNMENT_STORAGE_KEY,
   LEARNER_PROGRESS_SCHEMA_VERSION,
   type PersistedLearnerProgress,
   type PersistedStudyState,
 } from "@/src/lib/progress/learner-progress.types";
 import type { CourseProgressStore, MasteryProgressStore } from "@/src/lib/progress.types";
 
-export function createEmptyStudyState(): PersistedStudyState {
+export function createEmptyStudyState(
+  curriculumId?: CurriculumId,
+): PersistedStudyState {
   return {
     courseProgress: {
       version: 1,
@@ -41,25 +45,58 @@ export function createEmptyStudyState(): PersistedStudyState {
     },
     activeStudySession: null,
     muscleBriefViewedIds: [],
+    ...(curriculumId ? { curriculumId } : {}),
   };
 }
 
-export function createDefaultPersistedLearnerProgress(): PersistedLearnerProgress {
+export function createDefaultPersistedLearnerProgress(options?: {
+  curriculumId?: CurriculumId;
+}): PersistedLearnerProgress {
+  const curriculumId = options?.curriculumId;
+
   return {
     schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
     savedAt: new Date().toISOString(),
-    state: createEmptyStudyState(),
+    ...(curriculumId ? { curriculumId } : {}),
+    state: createEmptyStudyState(curriculumId),
   };
+}
+
+export function readCurriculumAssignment(): CurriculumId | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const stored = window.localStorage.getItem(CURRICULUM_ASSIGNMENT_STORAGE_KEY);
+  return stored ? parseCurriculumId(stored) : null;
+}
+
+export function writeCurriculumAssignment(curriculumId: CurriculumId): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(CURRICULUM_ASSIGNMENT_STORAGE_KEY, curriculumId);
+}
+
+export function clearCurriculumAssignment(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(CURRICULUM_ASSIGNMENT_STORAGE_KEY);
 }
 
 export function collectLocalStudyState(): PersistedStudyState {
   const activeStudySession = readActiveStudySession();
+  const curriculumId = readCurriculumAssignment();
 
   return {
     courseProgress: readCourseProgressStore(),
     masteryProgress: readMasteryProgress(),
     activeStudySession,
     muscleBriefViewedIds: getViewedMuscleBriefIds(),
+    ...(curriculumId ? { curriculumId } : {}),
   };
 }
 
@@ -86,6 +123,10 @@ export function applyStudyStateToLocal(state: PersistedStudyState): void {
     } else {
       clearMuscleBriefProgress();
     }
+
+    if (state.curriculumId) {
+      writeCurriculumAssignment(state.curriculumId);
+    }
   });
 }
 
@@ -94,6 +135,7 @@ export function clearLocalStudyState(): void {
   clearMasteryProgress();
   clearActiveStudySession();
   clearMuscleBriefProgress();
+  clearCurriculumAssignment();
 }
 
 function courseStoreHasActivity(store: CourseProgressStore): boolean {

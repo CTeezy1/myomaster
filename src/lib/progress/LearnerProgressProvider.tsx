@@ -12,9 +12,14 @@ import {
 } from "react";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/browser";
 import {
+  applyCurriculumAssignment,
+  createFreshProgressWithPinnedCurriculum,
+} from "@/src/lib/progress/curriculum-assignment";
+import {
   applyStudyStateToLocal,
   createDefaultPersistedLearnerProgress,
   ensureDefaultCourseInState,
+  readCurriculumAssignment,
 } from "@/src/lib/progress/learner-progress-snapshot";
 import {
   fetchLearnerProgressRow,
@@ -136,7 +141,20 @@ export function LearnerProgressProvider({
 
     if (!progress) {
       if (shouldUseLocalImport(profile.id, false)) {
-        progress = ensureDefaultCourseInState(buildImportedLearnerProgressFromLocal());
+        const imported = applyCurriculumAssignment(
+          ensureDefaultCourseInState(buildImportedLearnerProgressFromLocal()),
+          profile.section,
+        );
+
+        if (!imported.ok) {
+          setProgressState({
+            status: "invalid",
+            message: PROGRESS_LOAD_ERROR_MESSAGE,
+          });
+          return;
+        }
+
+        progress = imported.progress;
         const importResult = await saveLearnerProgressRow(
           client,
           profile.id,
@@ -160,7 +178,20 @@ export function LearnerProgressProvider({
         expectedRevisionRef.current = importResult.row.revision;
         markLocalMigrationComplete(profile.id);
       } else {
-        progress = ensureDefaultCourseInState(createDefaultPersistedLearnerProgress());
+        const assignedNew = applyCurriculumAssignment(
+          ensureDefaultCourseInState(createDefaultPersistedLearnerProgress()),
+          profile.section,
+        );
+
+        if (!assignedNew.ok) {
+          setProgressState({
+            status: "invalid",
+            message: PROGRESS_LOAD_ERROR_MESSAGE,
+          });
+          return;
+        }
+
+        progress = assignedNew.progress;
         const createResult = await saveLearnerProgressRow(
           client,
           profile.id,
@@ -184,7 +215,41 @@ export function LearnerProgressProvider({
         expectedRevisionRef.current = createResult.row.revision;
       }
     } else {
-      progress = ensureDefaultCourseInState(progress);
+      const assignedExisting = applyCurriculumAssignment(
+        ensureDefaultCourseInState(progress),
+        profile.section,
+      );
+
+      if (!assignedExisting.ok) {
+        setProgressState({
+          status: "invalid",
+          message: PROGRESS_LOAD_ERROR_MESSAGE,
+        });
+        return;
+      }
+
+      progress = assignedExisting.progress;
+
+      if (assignedExisting.didAssign) {
+        const pinResult = await saveLearnerProgressRow(
+          client,
+          profile.id,
+          progress,
+          {
+            hasExistingRow: hasExistingRowRef.current,
+            expectedRevision: expectedRevisionRef.current,
+          },
+        );
+
+        if (generation !== hydrationGenerationRef.current) {
+          return;
+        }
+
+        if (pinResult.ok) {
+          expectedRevisionRef.current = pinResult.row.revision;
+          hasExistingRowRef.current = true;
+        }
+      }
     }
 
     if (generation !== hydrationGenerationRef.current) {
@@ -198,7 +263,7 @@ export function LearnerProgressProvider({
       setProgressState({ status: "ready", hydrationVersion: next });
       return next;
     });
-  }, [profile.id]);
+  }, [profile.id, profile.section]);
 
   useEffect(() => {
     let isActive = true;
@@ -257,7 +322,11 @@ export function LearnerProgressProvider({
   const startFreshProgress = useCallback(async () => {
     const client = createBrowserSupabaseClient();
     const freshProgress = ensureDefaultCourseInState(
-      createDefaultPersistedLearnerProgress(),
+      createFreshProgressWithPinnedCurriculum(
+        createDefaultPersistedLearnerProgress,
+        profile.section,
+        readCurriculumAssignment(),
+      ),
     );
 
     saveQueueRef.current?.invalidatePendingWrites();
@@ -280,7 +349,7 @@ export function LearnerProgressProvider({
       return next;
     });
     return true;
-  }, [profile.id]);
+  }, [profile.id, profile.section]);
 
   const resetLearningProgressRemote = useCallback(async () => {
     saveQueueRef.current?.invalidatePendingWrites();

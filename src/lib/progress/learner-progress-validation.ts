@@ -2,6 +2,7 @@ import {
   ACTIVE_STUDY_SESSION_VERSION,
   type PersistedActiveStudySession,
 } from "@/src/lib/active-study-session";
+import { parseCurriculumId, type CurriculumId } from "@/src/lib/curriculum";
 import {
   LEARNER_PROGRESS_SCHEMA_VERSION,
   type PersistedLearnerProgress,
@@ -60,6 +61,26 @@ function isMasteryProgressStore(value: unknown): value is MasteryProgressStore {
   return true;
 }
 
+function parseOptionalCurriculumId(
+  value: unknown,
+): { ok: true; curriculumId?: CurriculumId } | { ok: false } {
+  if (value === undefined) {
+    return { ok: true };
+  }
+
+  if (typeof value !== "string") {
+    return { ok: false };
+  }
+
+  const curriculumId = parseCurriculumId(value);
+
+  if (!curriculumId) {
+    return { ok: false };
+  }
+
+  return { ok: true, curriculumId };
+}
+
 function isActiveStudySession(value: unknown): value is PersistedActiveStudySession {
   if (!isObject(value)) {
     return false;
@@ -96,6 +117,12 @@ export function parsePersistedStudyState(value: unknown): PersistedStudyState | 
     return null;
   }
 
+  const curriculum = parseOptionalCurriculumId(value.curriculumId);
+
+  if (!curriculum.ok) {
+    return null;
+  }
+
   let activeStudySession: PersistedActiveStudySession | null = null;
 
   if (value.activeStudySession !== null && value.activeStudySession !== undefined) {
@@ -111,6 +138,7 @@ export function parsePersistedStudyState(value: unknown): PersistedStudyState | 
     masteryProgress: value.masteryProgress,
     activeStudySession,
     muscleBriefViewedIds: value.muscleBriefViewedIds,
+    ...(curriculum.curriculumId ? { curriculumId: curriculum.curriculumId } : {}),
   };
 }
 
@@ -129,16 +157,31 @@ export function parsePersistedLearnerProgress(
     return null;
   }
 
+  const envelopeCurriculum = parseOptionalCurriculumId(value.curriculumId);
+
+  if (!envelopeCurriculum.ok) {
+    return null;
+  }
+
   const state = parsePersistedStudyState(value.state);
 
   if (!state) {
     return null;
   }
 
+  const curriculumId =
+    envelopeCurriculum.curriculumId ?? state.curriculumId;
+
   return {
     schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
     savedAt: value.savedAt,
-    state,
+    ...(curriculumId ? { curriculumId } : {}),
+    state: curriculumId
+      ? {
+          ...state,
+          curriculumId,
+        }
+      : state,
   };
 }
 
@@ -158,6 +201,7 @@ export function createValidatedPersistedLearnerProgress(
   return {
     schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
     savedAt: new Date().toISOString(),
+    ...(parsed.curriculumId ? { curriculumId: parsed.curriculumId } : {}),
     state: parsed,
   };
 }

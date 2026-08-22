@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { DEFAULT_COURSE_ID } from "@/src/config/study-flow";
-import { getCourseById } from "@/src/lib/course-controller";
 import { COURSE_DAYS } from "@/src/lib/introduction-policy";
 import { planDailyWorkload } from "@/src/lib/daily-workload-planning";
+import { resolvePinnedStudyCourse } from "@/src/lib/progress/curriculum-assignment";
 import {
   getCourseProgress,
   getCurrentStudyDay,
@@ -133,18 +132,22 @@ export function computeDashboardStats(course: Course): DashboardStats {
 }
 
 export function useDashboardStats(isDashboardActive: boolean) {
-  const dashboardCourse = getCourseById(DEFAULT_COURSE_ID);
-  const totalMuscleCount = dashboardCourse?.muscleProfileIds.length ?? 0;
+  const [dashboardCourse, setDashboardCourse] = useState<Course | null>(() =>
+    resolvePinnedStudyCourse(),
+  );
   const [stats, setStats] = useState<DashboardStats>(DEFAULT_DASHBOARD_STATS);
 
   const refreshDashboardStats = useCallback(() => {
-    if (!dashboardCourse) {
+    const course = resolvePinnedStudyCourse();
+    setDashboardCourse(course);
+
+    if (!course) {
       setStats(DEFAULT_DASHBOARD_STATS);
       return;
     }
 
-    setStats(computeDashboardStats(dashboardCourse));
-  }, [dashboardCourse]);
+    setStats(computeDashboardStats(course));
+  }, []);
 
   useEffect(() => {
     if (!isDashboardActive) {
@@ -156,7 +159,7 @@ export function useDashboardStats(isDashboardActive: boolean) {
 
   return {
     dashboardCourse,
-    totalMuscleCount,
+    totalMuscleCount: dashboardCourse?.muscleProfileIds.length ?? 0,
     totalStudyDays: COURSE_DAYS,
     ...stats,
     refreshDashboardStats,

@@ -1,4 +1,5 @@
 import type { PersistedActiveStudySession } from "@/src/lib/active-study-session";
+import type { CurriculumId } from "@/src/lib/curriculum";
 import type {
   CourseProgressStore,
   MasteryProgressStore,
@@ -6,16 +7,20 @@ import type {
 
 export const LEARNER_PROGRESS_SCHEMA_VERSION = 1;
 
+export const CURRICULUM_ASSIGNMENT_STORAGE_KEY = "myomaster-curriculum-id";
+
 export type PersistedStudyState = {
   courseProgress: CourseProgressStore;
   masteryProgress: MasteryProgressStore;
   activeStudySession: PersistedActiveStudySession | null;
   muscleBriefViewedIds: string[];
+  curriculumId?: CurriculumId;
 };
 
 export type PersistedLearnerProgress = {
   schemaVersion: typeof LEARNER_PROGRESS_SCHEMA_VERSION;
   savedAt: string;
+  curriculumId?: CurriculumId;
   state: PersistedStudyState;
 };
 
