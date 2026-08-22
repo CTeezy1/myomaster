@@ -12,7 +12,7 @@ export const hipCourse: Course = {
     "sartorius",
     "piriformis",
     "adductor-longus",
-    "adductor-magus",
+    "adductor-magnus",
     "adductor-brevis",
     "pectineus",
     "psoas-major",

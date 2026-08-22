@@ -12,12 +12,14 @@ import {
 import { getMuscleProfileById } from "@/src/data/muscle-profiles";
 import { resolveCardProgressKey } from "@/src/lib/card-progress-key";
 import { cards } from "@/src/data/cards";
+import { hipCourse } from "@/src/data/courses/hip-course";
 import { shoulderCourse } from "@/src/data/courses/shoulder-course";
 
 describe("muscle id migration", () => {
   it("remaps legacy muscle IDs to canonical IDs", () => {
     expect(migrateMuscleId("pectoral-minor")).toBe("pectoralis-minor");
     expect(migrateMuscleId("caracobrachialis")).toBe("coracobrachialis");
+    expect(migrateMuscleId("adductor-magus")).toBe("adductor-magnus");
   });
 
   it("remaps legacy card progress keys without losing categories", () => {
@@ -142,5 +144,24 @@ describe("muscle id migration", () => {
     );
     expect(getMuscleProfileById("coracobrachialis")?.name).toBe("Coracobrachialis");
     expect(getMuscleProfileById("pectoralis-minor")?.name).toBe("Pectoralis minor");
+  });
+
+  it("resolves corrected hip cards to canonical profile IDs", () => {
+    const adductorMagnusCard = cards.find(
+      (card) => card.muscle === "Adductor magnus" && card.region === "hip",
+    );
+
+    expect(adductorMagnusCard).toBeDefined();
+    expect(resolveCardProgressKey(adductorMagnusCard!, hipCourse)).toBe(
+      "adductor-magnus:origin",
+    );
+    expect(getMuscleProfileById("adductor-magnus")?.name).toBe("Adductor magnus");
+    expect(getMuscleProfileById("adductor-magnus")?.images.anatomy).toBe(
+      "/images/muscles/hip/adductor-magnus/anatomy.png",
+    );
+    expect(getMuscleProfileById("adductor-magnus")?.images.memory).toBe(
+      "/images/muscles/hip/adductor-magnus/memory.png",
+    );
+    expect(getMuscleProfileById("adductor-magus")).toBeUndefined();
   });
 });

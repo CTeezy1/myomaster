@@ -502,7 +502,7 @@ export const muscles: Muscle[] = [
   },
   {
     region: "hip",
-    Muscle: "Adductor Magus",
+    Muscle: "Adductor magnus",
     Origin: "Inferior Pubic ramus, ischial ramus, ischial tuberosity",
     Insertion: "Linea aspera and adductor tubercle",
     Action: "Hip adduction",
@@ -2618,7 +2618,7 @@ export const cards: Card[] = [
   {
     id: 241,
     region: "hip",
-    muscle: "Adductor Magus",
+    muscle: "Adductor magnus",
     category: "Origin",
     answer: "Inferior Pubic ramus, ischial ramus, ischial tuberosity",
     mastery: 0,
@@ -2626,7 +2626,7 @@ export const cards: Card[] = [
   {
     id: 242,
     region: "hip",
-    muscle: "Adductor Magus",
+    muscle: "Adductor magnus",
     category: "Insertion",
     answer: "Linea aspera and adductor tubercle",
     mastery: 0,
@@ -2634,7 +2634,7 @@ export const cards: Card[] = [
   {
     id: 243,
     region: "hip",
-    muscle: "Adductor Magus",
+    muscle: "Adductor magnus",
     category: "Action",
     answer: "Hip adduction",
     mastery: 0,
@@ -2642,7 +2642,7 @@ export const cards: Card[] = [
   {
     id: 244,
     region: "hip",
-    muscle: "Adductor Magus",
+    muscle: "Adductor magnus",
     category: "Innervation",
     answer: "Obturator nerve L2-L4; Sciatic nerve L4-S1",
     mastery: 0,

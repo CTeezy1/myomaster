@@ -24,7 +24,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "gluteus-maximus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The great lion represents gluteus maximus, the largest of the gluteal muscles. His extended leg represents hip extension, while the band around the leg represents insertion into the IT band. The power cord coming from below represents innervation by the inferior gluteal nerve.",
+    ],
   },
   {
     id: "gluteus-medius",
@@ -40,7 +42,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "gluteus-medius"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The jaguar represents gluteus medius. Its leg held out to the side represents hip abduction. The front feet on the rock pile represent insertion on the greater trochanter. The power cord coming from above represents innervation by the superior gluteal nerve.",
+    ],
   },
   {
     id: "gluteus-minimus",
@@ -56,7 +60,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "gluteus-minimus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The smallest cat represents gluteus minimus. Its leg held out to the side represents hip abduction. The front feet on the rock pile represent insertion on the greater trochanter. The power cord coming from above represents innervation by the superior gluteal nerve.",
+    ],
   },
   {
     id: "tensor-fasciae-latae",
@@ -72,7 +78,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "tensor-fasciae-latae"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The long, thin flamingo represents the tensor fasciae latae. Its leg held forward and out to the side represents hip flexion and abduction. The band around the legs represents insertion into the IT band. The power cord coming from above represents innervation by the superior gluteal nerve.",
+    ],
   },
   {
     id: "sartorius",
@@ -88,7 +96,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "sartorius"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The long, thin flamingo represents sartorius, the longest muscle in the body. Its flexed and abducted hip with a bent knee represents the muscle’s actions at the hip and knee. The webbed foot represents insertion at the pes anserinus. The blue background represents innervation by the femoral nerve.",
+    ],
   },
   {
     id: "piriformis",
@@ -104,7 +114,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "piriformis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The pear necklace represents piriformis, whose name refers to its pear shape. The cat’s externally rotated leg represents the muscle’s action of external rotation at the hip. Its feet on the rock pile represent insertion on the greater trochanter.",
+    ],
   },
   {
     id: "adductor-longus",
@@ -120,11 +132,13 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "adductor-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dog represents a hip adductor, while the long-bodied dachshund represents longus. The BP on its collar represents origin on the body of the pubis. Its leg crossed in front represents hip adduction and assistance with hip flexion. The line on the ground near its front feet represents insertion on the linea aspera. The green background represents innervation by the obturator nerve.",
+    ],
   },
   {
-    id: "adductor-magus",
-    name: "Adductor Magus",
+    id: "adductor-magnus",
+    name: "Adductor magnus",
     region: "hip",
     order: 8,
     description: "Muscle of the Hip",
@@ -134,9 +148,11 @@ export const hipMuscleProfiles: MuscleProfile[] = [
       action: "Hip adduction",
       innervation: "Obturator nerve L2-L4; Sciatic nerve L4-S1",
     },
-    images: muscleImages("hip", "adductor-magus"),
+    images: muscleImages("hip", "adductor-magnus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dog represents a hip adductor, while the Great Dane represents magnus, meaning “great.” The PRITIR on its collar represents origin on the pubic ramus, ischial tuberosity, and ischial ramus. Its leg crossed in front represents hip adduction. The line on the ground near its front feet represents insertion on the linea aspera. The green background represents innervation by the obturator nerve.",
+    ],
   },
   {
     id: "adductor-brevis",
@@ -152,7 +168,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "adductor-brevis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dog represents a hip adductor, while the short, compact pug represents brevis. The PR on its collar represents origin on the pubic ramus. Its leg crossed in front represents hip adduction and assistance with hip flexion. The line on the ground near its front feet represents insertion on the linea aspera. The green background represents innervation by the obturator nerve.",
+    ],
   },
   {
     id: "pectineus",
@@ -168,7 +186,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "pectineus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The dog represents a hip adductor, while the poodle provides the cue for pectineus. The PR on its collar represents origin on the pubic ramus. Its leg crossed in front represents hip adduction and assistance with hip flexion. The comb near its front feet represents insertion on the pectineal line of the femur. The blue background represents innervation by the femoral nerve.",
+    ],
   },
   {
     id: "psoas-major",
@@ -184,7 +204,9 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "psoas-major"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The larger bunny’s marching leg represents hip flexion. The lumbar spine behind the bunny represents the muscle’s origin from the vertebral bodies, while the front feet on the small rock represent insertion on the lesser trochanter.",
+    ],
   },
   {
     id: "iliacus",
@@ -200,6 +222,8 @@ export const hipMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("hip", "iliacus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The bunny’s marching leg represents hip flexion. The large rock behind the bunny represents its origin from the iliac fossa and iliac crest, while the front feet on the small rock represent insertion on the lesser trochanter. The blue background represents innervation by the femoral nerve.",
+    ],
   },
 ];

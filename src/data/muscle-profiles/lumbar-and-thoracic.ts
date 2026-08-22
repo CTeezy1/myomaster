@@ -24,7 +24,9 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "multifidus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The name multifidus means “split into many parts,” depicted by the many climbers traveling from the transverse processes toward the spinous processes.",
+    ],
   },
   {
     id: "erector-spinae",
@@ -40,7 +42,9 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "erector-spinae"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The three workers running vertically along each side of the spine represent the three erector spinae muscles: spinalis, longissimus, and iliocostalis.",
+    ],
   },
   {
     id: "rotatores",
@@ -56,7 +60,9 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "rotatores"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The small rotors on the vertebrae represent the rotatores, small muscles that help rotate and extend the spine.",
+    ],
   },
   {
     id: "quadratus-lumborum",
@@ -72,7 +78,9 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "quadratus-lumborum"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The pump jacks extending from the iliac crests toward the ribs represent the quadratus lumborum, which connects the pelvis to the 12th rib and helps side bend the spine.",
+    ],
   },
   {
     id: "transversus-abdominis",
@@ -88,7 +96,9 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "transversus-abdominis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The deep corset wrapped around the abdomen represents the transversus abdominis, a deep abdominal muscle that compresses the abdomen like a corset around the core.",
+    ],
   },
   {
     id: "internal-oblique",
@@ -104,7 +114,9 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "internal-oblique"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The deeper oblique fibers run from inferolateral to superomedial, represented by the upward diagonal lines. This fiber direction helps rotate the trunk to the same side.",
+    ],
   },
   {
     id: "rectus-abdominis",
@@ -120,7 +132,9 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "rectus-abdominis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The six-pack on the abdomen represents the rectus abdominis, the classic “six-pack” muscle that flexes the trunk.",
+    ],
   },
   {
     id: "external-oblique",
@@ -136,6 +150,8 @@ export const lumbarAndThoracicMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("lumbar-and-thoracic", "external-oblique"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The more superficial oblique fibers run from superolateral to inferomedial, represented by the downward diagonal lines. This fiber direction helps rotate the trunk to the opposite side.",
+    ],
   },
 ];

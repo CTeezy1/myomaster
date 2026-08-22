@@ -8,6 +8,7 @@ import type { MasteryProgressStore } from "@/src/lib/progress.types";
 export const LEGACY_MUSCLE_ID_MIGRATIONS = {
   "pectoral-minor": "pectoralis-minor",
   caracobrachialis: "coracobrachialis",
+  "adductor-magus": "adductor-magnus",
 } as const;
 
 export type LegacyMuscleId = keyof typeof LEGACY_MUSCLE_ID_MIGRATIONS;

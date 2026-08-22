@@ -24,7 +24,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "gastrocnemius"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The skier holds the femur rail to represent the gastrocnemius originating from the femoral condyles. Standing on tiptoes represents plantar flexion at the ankle. The pink color represents innervation by the tibial nerve.",
+    ],
   },
   {
     id: "soleus",
@@ -40,7 +42,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "soleus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The skier holds a thick pole for the tibia and a thin pole for the fibula, representing the soleus originating from both bones. Standing on tiptoes represents plantar flexion at the ankle. The pink color represents innervation by the tibial nerve.",
+    ],
   },
   {
     id: "tibialis-anterior",
@@ -56,7 +60,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "tibialis-anterior"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The snowboarder holds the thick tibia pole to represent the muscle’s origin on the tibia, while the “1” at the bottom of the pole represents insertion at the base of the first metatarsal. The toes-up position represents ankle dorsiflexion, and the backward hat represents inversion. The dark purple color represents innervation by the deep fibular nerve.",
+    ],
   },
   {
     id: "tibialis-posterior",
@@ -72,7 +78,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "tibialis-posterior"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The skier holds a thick pole for the tibia and a thin pole for the fibula, representing the tibialis posterior originating from both bones. Standing on tiptoes represents plantar flexion, while the backward hat represents inversion at the ankle. The pink color represents innervation by the tibial nerve.",
+    ],
   },
   {
     id: "fibularis-longus",
@@ -88,7 +96,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "fibularis-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The snowboarder holds the thin fibula pole to represent the muscle’s origin on the fibula, while the “1” at the bottom of the pole represents insertion at the base of the first metatarsal. The sideways hat represents eversion at the ankle. The light purple color represents innervation by the superficial fibular nerve.",
+    ],
   },
   {
     id: "fibularis-brevis",
@@ -104,7 +114,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "fibularis-brevis"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The smaller snowboarder holds the thin fibula pole lower down to represent the muscle’s origin on the distal fibula, while the “5” at the bottom of the pole represents insertion at the base of the fifth metatarsal. The sideways hat represents eversion at the ankle. The light purple color represents innervation by the superficial fibular nerve.",
+    ],
   },
   {
     id: "extensor-hallucis-longus",
@@ -120,7 +132,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "extensor-hallucis-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The barefoot skier holds the thin fibula pole to represent the muscle’s origin on the fibula. The “1” on the ski represents insertion on the great toe, while the ski curling upward represents great-toe extension. The dark purple color represents innervation by the deep fibular nerve.",
+    ],
   },
   {
     id: "ankle-and-foot-extensor-digitorum",
@@ -136,7 +150,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "ankle-and-foot-extensor-digitorum"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The barefoot skier holds a thick tibia pole and a thin fibula pole to represent the muscle’s origins on the tibia and fibula. The “2” and “5” on the skis represent insertion on toes 2–5, while the skis curling upward represent toe extension. The dark purple color represents innervation by the deep fibular nerve.",
+    ],
   },
   {
     id: "flexor-hallucis-longus",
@@ -152,7 +168,9 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "flexor-hallucis-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The barefoot skier holds the thin fibula pole to represent the muscle’s origin on the fibula. The “1” on the ski represents insertion on the great toe, while the ski curling downward represents great-toe flexion. The pink color represents innervation by the tibial nerve.",
+    ],
   },
   {
     id: "flexor-digitorum-longus",
@@ -168,6 +186,8 @@ export const ankleAndFootMuscleProfiles: MuscleProfile[] = [
     },
     images: muscleImages("ankle-and-foot", "flexor-digitorum-longus"),
     memoryStory: "",
-    whyMemoryWorks: "",
+    whyMemoryWorks: [
+      "The barefoot skier holds the thick tibia pole to represent the muscle’s origin on the tibia. The “2” and “5” on the skis represent insertion on toes 2–5, while the skis curling downward represent toe flexion. The pink color represents innervation by the tibial nerve.",
+    ],
   },
 ];
