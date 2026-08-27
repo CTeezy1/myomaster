@@ -23,7 +23,7 @@ export const muscles: Muscle[] = [
   {
     region: "cervical",
     Muscle: "Longus colli",
-    Origin: "C3-T1 Vertebrae",
+    Origin: "C3-T3",
     Insertion: "C1-C6 vertebrae",
     Action: "Cervical flexion/stability",
     Innervation: "Anterior rami of spinal nerves C2-C6",
@@ -49,7 +49,7 @@ export const muscles: Muscle[] = [
     Muscle: "Scalenes",
     Origin: "C2-C7 transverse processes",
     Insertion: "Ribs 1-2",
-    Action: "ipsi sidebending (unilateral)  , rib 1-2 elevation",
+    Action: "Neck flexion (bilateral), ipsilateral sidebend (unilateral), rib 1-2 elevation",
     Innervation: "Anterior rami of spinal nerves C3-C8",
   },
   {
@@ -57,7 +57,7 @@ export const muscles: Muscle[] = [
     Muscle: "Levator scapulae",
     Origin: "C1-C4 transverse processes",
     Insertion: "Superior medial scapula",
-    Action: "cervical sidebend (ipsilateral); scapular evelation and downward rotation",
+    Action: "Neck sidebend, elevation of the scapula, downward rotation of the scapula",
     Innervation: "Anterior rami C3-C4 and dorsal scapular nerve (c5)",
   },
   {
@@ -71,10 +71,10 @@ export const muscles: Muscle[] = [
   {
     region: "cervical",
     Muscle: "Semispinalis capitis",
-    Origin: "C4-T6 transverse/articular processes",
+    Origin: "C4-T6 transverse and articular processes",
     Insertion: "Occiput",
-    Action: "Head extension (bilateral) , contralateral rotation/ ipsilateral sidebend (unilateral)",
-    Innervation: "Greater Occipital nerve C2 and C3 spinal nerve",
+    Action: "Head extension (bilateral), contralateral rotation and ipsilateral sidebend (unilateral)",
+    Innervation: "Greater occipital nerve (C2) and C3 spinal nerve",
   },
   {
     region: "shoulder",
@@ -700,7 +700,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Longus colli",
     category: "Origin",
-    answer: "C3-T1 Vertebrae",
+    answer: "C3-T3",
     mastery: 0,
   },
   {
@@ -812,7 +812,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Scalenes",
     category: "Action",
-    answer: "ipsi sidebending (unilateral)  , rib 1-2 elevation",
+    answer: "Neck flexion (bilateral), ipsilateral sidebend (unilateral), rib 1-2 elevation",
     mastery: 0,
   },
   {
@@ -844,7 +844,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Levator scapulae",
     category: "Action",
-    answer: "cervical sidebend (ipsilateral); scapular evelation and downward rotation",
+    answer: "Neck sidebend, elevation of the scapula, downward rotation of the scapula",
     mastery: 0,
   },
   {
@@ -892,7 +892,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Semispinalis capitis",
     category: "Origin",
-    answer: "C4-T6 transverse/articular processes",
+    answer: "C4-T6 transverse and articular processes",
     mastery: 0,
   },
   {
@@ -908,7 +908,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Semispinalis capitis",
     category: "Action",
-    answer: "Head extension (bilateral) , contralateral rotation/ ipsilateral sidebend (unilateral)",
+    answer: "Head extension (bilateral), contralateral rotation and ipsilateral sidebend (unilateral)",
     mastery: 0,
   },
   {
@@ -916,7 +916,7 @@ export const cards: Card[] = [
     region: "cervical",
     muscle: "Semispinalis capitis",
     category: "Innervation",
-    answer: "Greater Occipital nerve C2 and C3 spinal nerve",
+    answer: "Greater occipital nerve (C2) and C3 spinal nerve",
     mastery: 0,
   },
   {

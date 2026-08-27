@@ -18,7 +18,7 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     description: "Deep anterior neck flexor and cervical stabilizer",
     coreFacts: {
       origin: "C3-T3",
-      insertion: "C1-C6",
+      insertion: "C1-C6 vertebrae",
       action: "Cervical flexion/stability",
       innervation: "Anterior rami of spinal nerves C2-C6",
     },
@@ -26,9 +26,7 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     memoryStory:
       "The LONGus COLli is the LONG muscle running along the COLli (neck) that flexes and stabilizes the cervical spine.",
     whyMemoryWorks: [
-      "Longus means long — picture one continuous muscle running vertically along the anterior neck.",
-      "Colli is Latin for neck, anchoring the image to the correct region.",
-      "Its anterior placement matches cervical flexion and stability.",
+      "The LONGus COLli is the LONG muscle running along the COLli (neck) that flexes and stabilizes the cervical spine.",
     ],
   },
   {
@@ -47,9 +45,7 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     memoryStory:
       "Longus Capitis is a LONG neck muscle that reaches up to the CAP (skull).",
     whyMemoryWorks: [
-      "Longus signals length — the muscle travels upward along the neck.",
-      "Capitis refers to the head, linking the insertion at the basilar occiput.",
-      "Reaching up to the cap matches head and neck flexion.",
+      "Longus Capitis is a LONG neck muscle that reaches up to the CAP (skull).",
     ],
   },
   {
@@ -59,7 +55,7 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     order: 3,
     description: "Superficial neck flexor and rotator",
     coreFacts: {
-      origin: "Manubrium, clavicle",
+      origin: "Manubrium of sternum, medial clavicle",
       insertion: "Mastoid process",
       action:
         "Flexion (bilateral) , contra rotation and ipsi sidebend (unilateral)",
@@ -69,9 +65,7 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     memoryStory:
       "The STERNO (chest) and CLEIDO (clavicle) connect to the MASTOID behind the ear like a strong strap.",
     whyMemoryWorks: [
-      "Sterno points to the manubrium of the sternum.",
-      "Cleido anchors the clavicular origin.",
-      "Mastoid names the mastoid process insertion behind the ear.",
+      "The STERNO (chest) and CLEIDO (clavicle) connect to the MASTOID behind the ear like a strong strap.",
     ],
   },
   {
@@ -85,16 +79,14 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
       origin: "C2-C7 transverse processes",
       insertion: "Ribs 1-2",
       action:
-        "Lateral flexion (unilateral) flexion (bilateral) , rib 1-2 elevation",
+        "Neck flexion (bilateral), ipsilateral sidebend (unilateral), rib 1-2 elevation",
       innervation: "Anterior rami of spinal nerves C3-C8",
     },
     images: muscleImages("scalenes"),
     memoryStory:
       "The first and second ribs can SCALE up the stairs toward the neck, or the neck can SCALE down toward that side of the ribs.",
     whyMemoryWorks: [
-      "Scale evokes upward movement — matching rib 1-2 elevation.",
-      "The stair image reinforces side-to-side motion for unilateral sidebending.",
-      "Connecting neck and ribs matches the scalenes' dual attachments.",
+      "The first and second ribs can SCALE up the stairs toward the neck, or the neck can SCALE down toward that side of the ribs.",
     ],
   },
   {
@@ -106,16 +98,15 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     coreFacts: {
       origin: "C1-C4 transverse processes",
       insertion: "Superior medial scapula",
-      action: "Extension (bilateral) , sidebend (ipsilateral)",
+      action:
+        "Neck sidebend, elevation of the scapula, downward rotation of the scapula",
       innervation: "Anterior rami C3-C4 and dorsal scapular nerve (c5)",
     },
     images: muscleImages("levator-scapulae"),
     memoryStory:
       "The levator scapulae works like an elevator that lifts the scapula.",
     whyMemoryWorks: [
-      "Levator literally means to lift — matching scapular elevation.",
-      "Scapulae names the superior medial scapula insertion.",
-      "The elevator image ties cervical sidebending to scapular movement.",
+      "The levator scapulae works like an elevator that lifts the scapula.",
     ],
   },
   {
@@ -126,7 +117,7 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     description: "Deep head extensors and rotators",
     coreFacts: {
       origin: "C1-C2",
-      insertion: "Occiput-C1",
+      insertion: "Occiput and C1",
       action: "Head extension, ipsilateral rotation",
       innervation: "Suboccipital nerve C1",
     },
@@ -134,9 +125,7 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     memoryStory:
       "The 4 suboccipital muscles are the alignment mechanics of the head.",
     whyMemoryWorks: [
-      "Suboccipital means below the occiput — the muscle group's location.",
-      "Four small muscles working together fits fine head extension and rotation.",
-      "Alignment mechanics reflects their role stabilizing head-on-neck movement.",
+      "The 4 suboccipital muscles are the alignment mechanics of the head.",
     ],
   },
   {
@@ -146,24 +135,17 @@ export const cervicalMuscleProfiles: MuscleProfile[] = [
     order: 7,
     description: "Deep head extensor and rotator",
     coreFacts: {
-      origin: "C4-T6 articular and transverse processes",
+      origin: "C4-T6 transverse and articular processes",
       insertion: "Occiput",
-      action: [
-        "Bilateral – head extension",
-        "Unilateral – ipsilateral sidebend and contralateral rotation",
-      ],
-      innervation: [
-        "Greater occipital nerve (C2)",
-        "Spinal nerve of C3",
-      ],
+      action:
+        "Head extension (bilateral), contralateral rotation and ipsilateral sidebend (unilateral)",
+      innervation: "Greater occipital nerve (C2) and C3 spinal nerve",
     },
     images: muscleImages("semispinalis-capitis"),
     memoryStory:
       "The SEMISPINALIS CAPITIS is the strong rigger that primarily extends the neck.",
     whyMemoryWorks: [
-      "Semispinalis describes the muscle spanning multiple spinal segments toward the head.",
-      "Capitis ties the action to head extension at the occiput.",
-      "A strong rigger image matches its role as a powerful neck extensor.",
+      "The SEMISPINALIS CAPITIS is the strong rigger that primarily extends the neck.",
     ],
   },
 ];

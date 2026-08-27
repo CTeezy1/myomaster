@@ -28,7 +28,7 @@ vi.mock("next/image", () => ({
 }));
 
 describe("MuscleBrief why memory works display", () => {
-  it("renders cervical whyMemoryWorks bullets without an accordion", () => {
+  it("renders cervical whyMemoryWorks as a paragraph without an accordion", () => {
     const profile = getMuscleProfileById("longus-colli");
 
     expect(profile).toBeDefined();
@@ -45,9 +45,9 @@ describe("MuscleBrief why memory works display", () => {
     expect(screen.queryByText("Memory Story")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /why this memory works/i })).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Longus means long — picture one continuous muscle/i),
+      screen.getByText(/The LONGus COLli is the LONG muscle running along the COLli/i),
     ).toBeVisible();
-    expect(screen.getByRole("list")).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("renders a single-item shoulder whyMemoryWorks paragraph without bullets", () => {

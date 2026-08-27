@@ -1,17 +1,38 @@
 import Link from "next/link";
 import { Card } from "@/app/components/ui/Card";
+import { cn } from "@/lib/cn";
 import {
   memoryCodeChapters,
+  type MemoryCodeListItem,
   type MemoryCodeSection,
 } from "@/app/components/memory-code/memory-code-content";
 
-function MemoryCodeList({ items }: { items: { text: string }[] }) {
+function MemoryCodeList({
+  items,
+  nested = false,
+}: {
+  items: MemoryCodeListItem[];
+  nested?: boolean;
+}) {
   return (
-    <ul className="mt-3 space-y-2 text-sm leading-relaxed text-text-primary sm:text-base">
+    <ul
+      className={cn(
+        "space-y-2 text-sm leading-relaxed text-text-primary sm:text-base",
+        nested ? "mt-2" : "mt-3",
+      )}
+    >
       {items.map((item) => (
         <li key={item.text} className="flex gap-2">
-          <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
-          <span>{item.text}</span>
+          <span
+            aria-hidden="true"
+            className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500"
+          />
+          <div>
+            <span>{item.text}</span>
+            {item.items && item.items.length > 0 ? (
+              <MemoryCodeList items={item.items} nested />
+            ) : null}
+          </div>
         </li>
       ))}
     </ul>
@@ -73,6 +94,20 @@ function MemoryCodeSectionBlock({ section }: { section: MemoryCodeSection }) {
     );
   }
 
+  if (section.type === "list") {
+    return (
+      <section aria-labelledby={`${section.id}-heading`}>
+        <h3
+          id={`${section.id}-heading`}
+          className="text-lg font-semibold tracking-tight text-text-primary"
+        >
+          {section.heading}
+        </h3>
+        <MemoryCodeList items={section.items} />
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby={`${section.id}-heading`}>
       <h3
@@ -112,31 +147,18 @@ export function MemoryCodeOverview() {
       </header>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
-        <div className="space-y-6">
-          {memoryCodeChapters.map((chapter) => (
-            <Card key={chapter.id} className="space-y-6 p-5 sm:p-6">
-              <h2 className="border-b border-border pb-3 text-xl font-semibold tracking-tight text-text-primary">
-                {chapter.title}
-              </h2>
-              <div className="space-y-7">
-                {chapter.sections.map((section) => (
-                  <MemoryCodeSectionBlock key={section.id} section={section} />
-                ))}
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        <aside aria-label="Additional memory codes">
-          <Card className="p-5 sm:p-6">
-            <h2 className="text-lg font-semibold tracking-tight text-text-primary">
-              More Memory Codes
+        {memoryCodeChapters.map((chapter) => (
+          <Card key={chapter.id} className="space-y-6 p-5 sm:p-6">
+            <h2 className="border-b border-border pb-3 text-xl font-semibold tracking-tight text-text-primary">
+              {chapter.title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-text-muted sm:text-base">
-              (Coming Soon)
-            </p>
+            <div className="space-y-7">
+              {chapter.sections.map((section) => (
+                <MemoryCodeSectionBlock key={section.id} section={section} />
+              ))}
+            </div>
           </Card>
-        </aside>
+        ))}
       </div>
 
       <Link
