@@ -14,6 +14,7 @@ describe("instructor route security wiring", () => {
     expect(page).toContain("loadInstructorRoster");
     expect(page).not.toContain("NEXT_PUBLIC_INSTRUCTOR_USER_IDS");
     expect(page).not.toContain("createServiceRoleSupabaseClient");
+    expect(page).toContain("week: params.week");
   });
 
   it("does not add a database migration for instructor access", () => {

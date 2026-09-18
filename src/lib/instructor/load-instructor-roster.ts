@@ -3,8 +3,12 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isInstructorUserId } from "@/src/lib/auth/instructor-allowlist";
 import {
+  getAvailableInstructorWeeks,
+  getInstructorReachedWeekNumber,
   mapInstructorStudentRow,
   parseInstructorSectionInput,
+  parseInstructorWeekInput,
+  resolveInstructorWeekSelection,
   type InstructorRosterDto,
 } from "@/src/lib/instructor/instructor-student";
 import { createServiceRoleSupabaseClient } from "@/src/lib/supabase/admin";
@@ -13,7 +17,7 @@ export type LoadInstructorRosterResult =
   | { ok: true; roster: InstructorRosterDto }
   | {
       ok: false;
-      kind: "unauthorized" | "invalid_section" | "load_error";
+      kind: "unauthorized" | "invalid_section" | "invalid_week" | "load_error";
     };
 
 export type LoadInstructorRosterDependencies = {
@@ -39,6 +43,7 @@ export async function loadInstructorRoster(
   input: {
     userId: string | null | undefined;
     section: unknown;
+    week?: unknown;
     now?: Date;
   },
   deps: LoadInstructorRosterDependencies = defaultDependencies,
@@ -51,6 +56,12 @@ export async function loadInstructorRoster(
 
   if (!parsedSection.ok) {
     return { ok: false, kind: "invalid_section" };
+  }
+
+  const parsedWeek = parseInstructorWeekInput(input.week);
+
+  if (!parsedWeek.ok) {
+    return { ok: false, kind: "invalid_week" };
   }
 
   const client = deps.createPrivilegedClient();
@@ -85,15 +96,31 @@ export async function loadInstructorRoster(
       }
     }
 
+    const availableWeeks = getAvailableInstructorWeeks(
+      typedProfiles.map((profile) =>
+        getInstructorReachedWeekNumber(
+          progressByUserId.get(profile.id) ?? null,
+          input.now,
+        ),
+      ),
+    );
+    const selectedWeek = resolveInstructorWeekSelection(
+      parsedWeek.week,
+      availableWeeks,
+    );
+
     return {
       ok: true,
       roster: {
         section: parsedSection.section,
+        selectedWeek,
+        availableWeeks,
         students: typedProfiles.map((profile) =>
           mapInstructorStudentRow({
             username: profile.username,
             section: profile.section,
             progressData: progressByUserId.get(profile.id) ?? null,
+            selectedWeek,
             now: input.now,
           }),
         ),

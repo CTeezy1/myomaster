@@ -8,10 +8,11 @@ export async function GET(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const section = new URL(request.url).searchParams.get("section");
+  const url = new URL(request.url);
   const result = await loadInstructorRoster({
     userId: user?.id ?? null,
-    section,
+    section: url.searchParams.get("section"),
+    week: url.searchParams.get("week"),
   });
 
   if (!result.ok) {
@@ -21,6 +22,10 @@ export async function GET(request: Request) {
 
     if (result.kind === "invalid_section") {
       return NextResponse.json({ error: "Invalid section." }, { status: 400 });
+    }
+
+    if (result.kind === "invalid_week") {
+      return NextResponse.json({ error: "Invalid week." }, { status: 400 });
     }
 
     return NextResponse.json({ error: "Unable to load roster." }, { status: 500 });

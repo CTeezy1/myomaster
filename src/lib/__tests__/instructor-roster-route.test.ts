@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/instructor/roster/route";
+import { CURRENT_INSTRUCTOR_WEEK } from "@/src/lib/instructor/instructor-student";
 import { loadInstructorRoster } from "@/src/lib/instructor/load-instructor-roster";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -37,7 +38,12 @@ describe("GET /api/instructor/roster", () => {
     mockSessionUser(INSTRUCTOR_UUID);
     mockedLoadInstructorRoster.mockResolvedValue({
       ok: true,
-      roster: { section: "Kinesiology 1", students: [] },
+      roster: {
+        section: "Kinesiology 1",
+        selectedWeek: CURRENT_INSTRUCTOR_WEEK,
+        availableWeeks: [],
+        students: [],
+      },
     });
 
     const response = await GET(
@@ -49,15 +55,18 @@ describe("GET /api/instructor/roster", () => {
     expect(mockedLoadInstructorRoster).toHaveBeenCalledWith({
       userId: INSTRUCTOR_UUID,
       section: "Kinesiology 1",
+      week: null,
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       section: "Kinesiology 1",
+      selectedWeek: CURRENT_INSTRUCTOR_WEEK,
+      availableWeeks: [],
       students: [],
     });
   });
 
-  it("returns no roster data for an authenticated student", async () => {
+  it("returns no roster data for an authenticated student, even with a week param", async () => {
     mockSessionUser(STUDENT_UUID);
     mockedLoadInstructorRoster.mockResolvedValue({
       ok: false,
@@ -65,7 +74,9 @@ describe("GET /api/instructor/roster", () => {
     });
 
     const response = await GET(
-      new Request("http://localhost/api/instructor/roster?section=Kinesiology%201"),
+      new Request(
+        "http://localhost/api/instructor/roster?section=Kinesiology%201&week=1",
+      ),
     );
     const body = await response.json();
 
@@ -75,6 +86,7 @@ describe("GET /api/instructor/roster", () => {
     expect(mockedLoadInstructorRoster).toHaveBeenCalledWith({
       userId: STUDENT_UUID,
       section: "Kinesiology 1",
+      week: "1",
     });
   });
 
@@ -91,5 +103,22 @@ describe("GET /api/instructor/roster", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: "Invalid section." });
+  });
+
+  it("rejects an invalid week", async () => {
+    mockSessionUser(INSTRUCTOR_UUID);
+    mockedLoadInstructorRoster.mockResolvedValue({
+      ok: false,
+      kind: "invalid_week",
+    });
+
+    const response = await GET(
+      new Request(
+        "http://localhost/api/instructor/roster?section=Kinesiology%201&week=-1",
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Invalid week." });
   });
 });
