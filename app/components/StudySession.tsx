@@ -16,6 +16,7 @@ type StudySessionProps = {
   onGrade: (type: "correct" | "partial" | "incorrect") => void;
   onReviewBrief: () => void;
   onContinue: () => void;
+  onReturnToDashboard: () => void;
 };
 
 export function StudySession({
@@ -31,6 +32,7 @@ export function StudySession({
   onGrade,
   onReviewBrief,
   onContinue,
+  onReturnToDashboard,
 }: StudySessionProps) {
   const gradeLocked = feedbackGrade !== null;
   const showCardProgress =
@@ -147,6 +149,12 @@ export function StudySession({
           </div>
         )}
       </Card>
+
+      <div className="mt-4">
+        <Button fullWidth variant="secondary" onClick={onReturnToDashboard}>
+          ← Return to Dashboard
+        </Button>
+      </div>
     </div>
   );
 }

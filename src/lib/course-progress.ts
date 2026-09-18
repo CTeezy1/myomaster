@@ -15,6 +15,7 @@ import type {
   CourseProgress,
   CourseProgressStore,
   Grade,
+  StudyDayCompletion,
 } from "@/src/lib/progress.types";
 
 export const COURSE_PROGRESS_STORAGE_KEY = "myomaster-course-progress";
@@ -175,6 +176,41 @@ function parseCompletedStudyDays(value: unknown): number[] {
   return studyDays.sort((left, right) => left - right);
 }
 
+function parseStudyDayCompletions(value: unknown): StudyDayCompletion[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const completions: StudyDayCompletion[] = [];
+  const seenStudyDays = new Set<number>();
+
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+
+    const record = entry as Record<string, unknown>;
+
+    if (typeof record.studyDay !== "number" || !Number.isInteger(record.studyDay)) {
+      continue;
+    }
+
+    const studyDay = clampStudyDay(record.studyDay);
+
+    if (seenStudyDays.has(studyDay) || !isIsoTimestamp(record.completedAt)) {
+      continue;
+    }
+
+    seenStudyDays.add(studyDay);
+    completions.push({
+      studyDay,
+      completedAt: record.completedAt,
+    });
+  }
+
+  return completions;
+}
+
 function parseCourseProgress(value: unknown): CourseProgress | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -208,6 +244,7 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
     record.carriedOverRetryKeys,
   ) as CardProgressKey[];
   const completedStudyDays = parseCompletedStudyDays(record.completedStudyDays);
+  const studyDayCompletions = parseStudyDayCompletions(record.studyDayCompletions);
 
   const filteredIntroductionDates: Record<string, string> = {};
   const filteredIntroductionStudyDays: Record<string, number> = {};
@@ -233,6 +270,7 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
     recentGrades,
     carriedOverRetryKeys,
     completedStudyDays,
+    studyDayCompletions,
   };
 }
 
@@ -378,6 +416,7 @@ function normalizeCourseProgress(progress: CourseProgress): CourseProgress {
     introductionStudyDays: { ...progress.introductionStudyDays },
     carriedOverRetryKeys: progress.carriedOverRetryKeys ?? [],
     completedStudyDays: progress.completedStudyDays ?? [],
+    studyDayCompletions: progress.studyDayCompletions ?? [],
   };
 
   for (const muscleId of normalized.introducedMuscleIds) {
@@ -426,6 +465,7 @@ export function createDefaultCourseProgress(courseId: string): CourseProgress {
     recentGrades: [],
     carriedOverRetryKeys: [],
     completedStudyDays: [],
+    studyDayCompletions: [],
   };
 }
 
@@ -482,6 +522,7 @@ export function isCurrentStudyDayCompleted(progress: CourseProgress): boolean {
 export function markStudyDayCompleted(
   courseId: string,
   studyDay?: number,
+  now: Date = new Date(),
 ): CourseProgress {
   const progress = getCourseProgress(courseId);
   const targetStudyDay = clampStudyDay(studyDay ?? progress.currentStudyDay);
@@ -495,6 +536,13 @@ export function markStudyDayCompleted(
     completedStudyDays: [...progress.completedStudyDays, targetStudyDay].sort(
       (left, right) => left - right,
     ),
+    studyDayCompletions: [
+      ...(progress.studyDayCompletions ?? []),
+      {
+        studyDay: targetStudyDay,
+        completedAt: toIsoString(now),
+      },
+    ],
   };
 
   writeCourseProgress(updated);

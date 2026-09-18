@@ -1,6 +1,7 @@
 import { Button } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Card";
 import { formatStudyDayStatValue } from "@/src/lib/study-day-display";
+import type { WeeklyParticipation } from "@/src/lib/participation";
 
 type DashboardProps = {
   currentStudyDay: number;
@@ -15,7 +16,7 @@ type DashboardProps = {
   onAdvanceStudyDay?: () => void;
   onOpenMuscleLibrary: () => void;
   onOpenMemoryCode: () => void;
-  onResetLearningProgress?: () => void;
+  weeklyParticipation?: WeeklyParticipation | null;
 };
 
 function StatItem({
@@ -40,6 +41,58 @@ function StatItem({
   );
 }
 
+function WeeklyParticipationPanel({
+  participation,
+}: {
+  participation: WeeklyParticipation;
+}) {
+  const remaining = participation.goalDays - participation.completedDays;
+
+  return (
+    <div className="rounded-[var(--radius)] border border-brand-200 bg-brand-50 px-4 py-3.5 text-center sm:text-left">
+      <p className="text-xs font-semibold uppercase tracking-wider text-brand-700">
+        This week
+      </p>
+      {participation.isComplete ? (
+        <>
+          <p className="mt-1 text-sm font-medium text-brand-800">
+            Weekly Goal Complete ✓
+          </p>
+          <p className="mt-1 text-sm font-medium text-brand-800">
+            {participation.goalDays} of {participation.goalDays} study days
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="mt-1 text-lg font-semibold tracking-tight text-text-primary">
+            {participation.completedDays} of {participation.goalDays} study days
+            complete
+          </p>
+          <div
+            className="mt-2 flex justify-center gap-2 sm:justify-start"
+            aria-hidden="true"
+          >
+            {Array.from({ length: participation.goalDays }, (_, index) => (
+              <span
+                key={index}
+                className={`h-2.5 w-2.5 rounded-full ${
+                  index < participation.completedDays
+                    ? "bg-brand-700"
+                    : "border border-brand-300 bg-surface"
+                }`}
+              />
+            ))}
+          </div>
+          <p className="mt-2 text-sm text-brand-800">
+            Complete {remaining} more study{" "}
+            {remaining === 1 ? "day" : "days"} this week to reach your goal.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function Dashboard({
   currentStudyDay,
   totalStudyDays,
@@ -53,7 +106,7 @@ export function Dashboard({
   onAdvanceStudyDay,
   onOpenMuscleLibrary,
   onOpenMemoryCode,
-  onResetLearningProgress,
+  weeklyParticipation = null,
 }: DashboardProps) {
   const studyDayDisplay = formatStudyDayStatValue(
     currentStudyDay,
@@ -84,6 +137,15 @@ export function Dashboard({
               value={`${introducedMuscleCount} of ${totalMuscleCount}`}
             />
           </div>
+
+          {weeklyParticipation ? (
+            <WeeklyParticipationPanel participation={weeklyParticipation} />
+          ) : null}
+
+          <p className="text-sm leading-relaxed text-text-secondary">
+            Build long-term mastery with 5 MyoMaster study sessions each week.
+            Complete them on any 5 days that work for you.
+          </p>
 
           {isStudyDayComplete && (
             <p className="rounded-[var(--radius)] border border-brand-200 bg-brand-50 px-4 py-3 text-center text-sm font-medium leading-relaxed text-brand-800">
@@ -122,18 +184,6 @@ export function Dashboard({
           </Button>
         </div>
       </Card>
-
-      {onResetLearningProgress && (
-        <div className="pt-2 text-center sm:text-left">
-          <button
-            type="button"
-            onClick={onResetLearningProgress}
-            className="text-xs text-text-muted underline-offset-2 transition-colors hover:text-text-secondary hover:underline"
-          >
-            Reset Learning Progress
-          </button>
-        </div>
-      )}
     </div>
   );
 }

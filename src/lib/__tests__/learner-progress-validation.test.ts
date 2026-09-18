@@ -64,6 +64,81 @@ describe("parsePersistedLearnerProgress", () => {
     ).toBeNull();
   });
 
+  it("accepts legacy course progress that omits studyDayCompletions", () => {
+    const parsed = parsePersistedLearnerProgress({
+      schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
+      savedAt: "2026-07-30T00:00:00.000Z",
+      state: {
+        courseProgress: {
+          version: 1,
+          courses: {
+            cervical: {
+              version: 1,
+              courseId: "cervical",
+              startedAt: "2026-07-30T00:00:00.000Z",
+              currentStudyDay: 12,
+              introducedMuscleIds: ["longus-colli"],
+              introductionDates: {},
+              introductionStudyDays: { "longus-colli": 1 },
+              recentGrades: [],
+              carriedOverRetryKeys: [],
+              completedStudyDays: [1, 2, 3],
+            },
+          },
+        },
+        masteryProgress: { version: 1, cards: {} },
+        activeStudySession: null,
+        muscleBriefViewedIds: [],
+      },
+    });
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.schemaVersion).toBe(1);
+    expect(
+      parsed?.state.courseProgress.courses.cervical?.studyDayCompletions,
+    ).toBeUndefined();
+    expect(parsed?.state.courseProgress.courses.cervical?.currentStudyDay).toBe(
+      12,
+    );
+  });
+
+  it("accepts studyDayCompletions when present", () => {
+    const parsed = parsePersistedLearnerProgress({
+      schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
+      savedAt: "2026-09-17T00:00:00.000Z",
+      state: {
+        courseProgress: {
+          version: 1,
+          courses: {
+            cervical: {
+              version: 1,
+              courseId: "cervical",
+              startedAt: "2026-09-17T00:00:00.000Z",
+              currentStudyDay: 1,
+              introducedMuscleIds: [],
+              introductionDates: {},
+              introductionStudyDays: {},
+              recentGrades: [],
+              carriedOverRetryKeys: [],
+              completedStudyDays: [1],
+              studyDayCompletions: [
+                { studyDay: 1, completedAt: "2026-09-17T21:14:03.512Z" },
+              ],
+            },
+          },
+        },
+        masteryProgress: { version: 1, cards: {} },
+        activeStudySession: null,
+        muscleBriefViewedIds: [],
+      },
+    });
+
+    expect(parsed).not.toBeNull();
+    expect(
+      parsed?.state.courseProgress.courses.cervical?.studyDayCompletions,
+    ).toEqual([{ studyDay: 1, completedAt: "2026-09-17T21:14:03.512Z" }]);
+  });
+
   it("accepts legacy payloads that omit curriculumId", () => {
     const parsed = parsePersistedLearnerProgress({
       schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,

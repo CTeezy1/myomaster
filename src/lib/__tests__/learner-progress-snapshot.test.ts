@@ -55,7 +55,10 @@ describe("learner progress snapshot", () => {
             introductionStudyDays: { "psoas-major": 1 },
             recentGrades: ["correct"],
             carriedOverRetryKeys: [],
-            completedStudyDays: [],
+            completedStudyDays: [1],
+            studyDayCompletions: [
+              { studyDay: 1, completedAt: "2026-07-30T00:00:00.000Z" },
+            ],
           },
         },
       }),
@@ -129,6 +132,10 @@ describe("learner progress snapshot", () => {
     expect(restoredSession?.session.queue[1]?.isPendingRetry).toBe(true);
     expect(restoredSession?.obligationProgress.total).toBe(1);
     expect(restoredSession?.obligationProgress.completedObligationIds).toEqual([]);
+    expect(
+      JSON.parse(localStorage.getItem(COURSE_PROGRESS_STORAGE_KEY)!)
+        .courses["kinesiology-program"].studyDayCompletions,
+    ).toEqual([{ studyDay: 1, completedAt: "2026-07-30T00:00:00.000Z" }]);
   });
 
   it("does not include credentials or tokens in the progress payload", () => {

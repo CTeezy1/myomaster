@@ -207,6 +207,7 @@ export function migrateCourseProgress(progress: CourseProgress): CourseProgress 
     introductionStudyDays: migrateRecordKeys(progress.introductionStudyDays),
     carriedOverRetryKeys: migrateCarriedOverRetryKeys(progress.carriedOverRetryKeys),
     completedStudyDays: progress.completedStudyDays ?? [],
+    studyDayCompletions: progress.studyDayCompletions ?? [],
   };
 }
 

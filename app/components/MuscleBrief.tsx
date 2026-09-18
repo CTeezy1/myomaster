@@ -24,6 +24,7 @@ export type MuscleBriefProps = {
   mode: MuscleBriefMode;
   libraryRegionName?: string;
   onPrimaryAction: () => void;
+  onReturnToDashboard?: () => void;
 };
 
 type FactLabel = "Origin" | "Insertion" | "Action" | "Innervation";
@@ -243,6 +244,7 @@ export function MuscleBrief({
   mode,
   libraryRegionName,
   onPrimaryAction,
+  onReturnToDashboard,
 }: MuscleBriefProps) {
   const primaryActionLabel = getMuscleBriefPrimaryLabel(
     mode,
@@ -299,10 +301,20 @@ export function MuscleBrief({
           </Card>
         </div>
 
-        <div className="pt-2">
+        <div className="space-y-4 pt-2">
           <Button fullWidth type="button" onClick={onPrimaryAction}>
             {primaryActionLabel}
           </Button>
+          {onReturnToDashboard ? (
+            <Button
+              fullWidth
+              variant="secondary"
+              type="button"
+              onClick={onReturnToDashboard}
+            >
+              ← Return to Dashboard
+            </Button>
+          ) : null}
         </div>
       </div>
     </div>

@@ -41,7 +41,8 @@ function isCourseProgress(value: unknown): value is CourseProgress {
     isObject(value.introductionStudyDays) &&
     Array.isArray(value.recentGrades) &&
     isStringArray(value.carriedOverRetryKeys) &&
-    Array.isArray(value.completedStudyDays)
+    Array.isArray(value.completedStudyDays) &&
+    (value.studyDayCompletions === undefined || Array.isArray(value.studyDayCompletions))
   );
 }
 

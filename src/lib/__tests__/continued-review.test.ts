@@ -19,6 +19,7 @@ import { canAdvanceStudyDay } from "@/src/lib/guided-scheduling";
 import { computeDashboardStats } from "@/src/hooks/useDashboardStats";
 import {
   getDailyNewMuscleTarget,
+  COURSE_DAYS,
   INTRODUCTION_PERIOD_DAYS,
 } from "@/src/lib/introduction-policy";
 import { clearAllLearningProgress } from "@/src/lib/learning-progress-reset";
@@ -30,6 +31,7 @@ import {
 } from "@/src/lib/active-study-session";
 import { applyGradeToProgress, isCardDue } from "@/src/lib/scheduling";
 import {
+  EXPECTED_COURSE_STUDY_SESSIONS,
   formatStudyDayStatValue,
   isContinuedReviewStudyDay,
 } from "@/src/lib/study-day-display";
@@ -312,6 +314,29 @@ describe("continued review beyond study day 105", () => {
       primary: "106",
       secondary: "Continued Review",
     });
+    expect(isContinuedReviewStudyDay(106)).toBe(true);
+  });
+
+  it("keeps the 75-session course expectation separate from the 105-day engine bound", () => {
+    expect(EXPECTED_COURSE_STUDY_SESSIONS).toBe(75);
+    expect(COURSE_DAYS).toBe(105);
+    expect(formatStudyDayStatValue(75, EXPECTED_COURSE_STUDY_SESSIONS)).toEqual({
+      primary: "75 of 75",
+    });
+    expect(formatStudyDayStatValue(76, EXPECTED_COURSE_STUDY_SESSIONS)).toEqual({
+      primary: "76",
+    });
+    expect(formatStudyDayStatValue(105, EXPECTED_COURSE_STUDY_SESSIONS)).toEqual({
+      primary: "105",
+    });
+    expect(formatStudyDayStatValue(106, EXPECTED_COURSE_STUDY_SESSIONS)).toEqual({
+      primary: "106",
+      secondary: "Continued Review",
+    });
+    expect(formatStudyDayStatValue(75).primary).toBe("75 of 105");
+    expect(isContinuedReviewStudyDay(75)).toBe(false);
+    expect(isContinuedReviewStudyDay(76)).toBe(false);
+    expect(isContinuedReviewStudyDay(105)).toBe(false);
     expect(isContinuedReviewStudyDay(106)).toBe(true);
   });
 

@@ -12,6 +12,7 @@ import {
 import {
   createDefaultCourseProgress,
   getCourseProgress,
+  isCurrentStudyDayCompleted,
   markStudyDayCompleted,
   writeCourseProgressStore,
 } from "@/src/lib/course-progress";
@@ -143,6 +144,65 @@ describe("active study session persistence", () => {
         readActiveStudySession(),
         "cervical",
         getCourseProgress("cervical"),
+      ),
+    ).toBe(true);
+  });
+
+  it("does not mark the study day complete merely because the learner returned to the dashboard", () => {
+    let session = createSameSessionRelearnState(queue, { enforceDailyCap: true });
+    session = applySameSessionGrade(session, queue[0], "correct");
+    session = advanceSameSessionIndex(session);
+
+    writeActiveStudySession(
+      createPersistedActiveStudySession({
+        courseId: "cervical",
+        studyDay: 2,
+        plannedStaticQueue: queue,
+        session,
+        screen: "study-day",
+        currentMuscleIndex: 0,
+        cardFeedback: createInitialCardFeedbackState(),
+      }),
+    );
+
+    const courseProgress = getCourseProgress("cervical");
+
+    expect(isCurrentStudyDayCompleted(courseProgress)).toBe(false);
+    expect(courseProgress.completedStudyDays).not.toContain(2);
+    expect(
+      isResumableActiveStudySession(
+        readActiveStudySession(),
+        "cervical",
+        courseProgress,
+      ),
+    ).toBe(true);
+    expect(readActiveStudySession()?.session.index).toBe(1);
+  });
+
+  it("remains resumable after leaving from Muscle Brief without completing the study day", () => {
+    const session = createSameSessionRelearnState(queue, { enforceDailyCap: true });
+
+    writeActiveStudySession(
+      createPersistedActiveStudySession({
+        courseId: "cervical",
+        studyDay: 2,
+        plannedStaticQueue: queue,
+        session,
+        screen: "brief",
+        currentMuscleIndex: 0,
+        cardFeedback: createInitialCardFeedbackState(),
+      }),
+    );
+
+    const courseProgress = getCourseProgress("cervical");
+
+    expect(isCurrentStudyDayCompleted(courseProgress)).toBe(false);
+    expect(readActiveStudySession()?.screen).toBe("brief");
+    expect(
+      isResumableActiveStudySession(
+        readActiveStudySession(),
+        "cervical",
+        courseProgress,
       ),
     ).toBe(true);
   });

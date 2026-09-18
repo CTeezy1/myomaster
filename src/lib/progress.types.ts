@@ -36,6 +36,11 @@ export type CreateDefaultCardProgressInput = {
   category: CardCategory;
 };
 
+export type StudyDayCompletion = {
+  studyDay: number;
+  completedAt: string;
+};
+
 export interface CourseProgress {
   version: 1;
   courseId: string;
@@ -47,6 +52,7 @@ export interface CourseProgress {
   recentGrades: Grade[];
   carriedOverRetryKeys: CardProgressKey[];
   completedStudyDays: number[];
+  studyDayCompletions?: StudyDayCompletion[];
 }
 
 export interface CourseProgressStore {

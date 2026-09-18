@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { COURSE_DAYS } from "@/src/lib/introduction-policy";
+import { EXPECTED_COURSE_STUDY_SESSIONS } from "@/src/lib/study-day-display";
 import { planDailyWorkload } from "@/src/lib/daily-workload-planning";
 import { resolvePinnedStudyCourse } from "@/src/lib/progress/curriculum-assignment";
 import {
@@ -24,6 +24,10 @@ import {
   isResumableActiveStudySession,
   readActiveStudySession,
 } from "@/src/lib/active-study-session";
+import {
+  getCurrentWeeklyParticipation,
+  type WeeklyParticipation,
+} from "@/src/lib/participation";
 import type { Course } from "@/src/lib/course.types";
 
 export type DashboardStats = {
@@ -46,6 +50,7 @@ export type DashboardStats = {
   canStartReview: boolean;
   canAdvanceStudyDay: boolean;
   isStudyDayComplete: boolean;
+  weeklyParticipation: WeeklyParticipation | null;
 };
 
 const DEFAULT_DASHBOARD_STATS: DashboardStats = {
@@ -62,9 +67,13 @@ const DEFAULT_DASHBOARD_STATS: DashboardStats = {
   canStartReview: false,
   canAdvanceStudyDay: false,
   isStudyDayComplete: false,
+  weeklyParticipation: null,
 };
 
-export function computeDashboardStats(course: Course): DashboardStats {
+export function computeDashboardStats(
+  course: Course,
+  now: Date = new Date(),
+): DashboardStats {
   const muscleIds = course.muscleProfileIds;
   const masteryStore = readMasteryProgress();
   const courseProgress = getCourseProgress(course.id);
@@ -128,6 +137,10 @@ export function computeDashboardStats(course: Course): DashboardStats {
       masteryStore,
     ),
     isStudyDayComplete,
+    weeklyParticipation: getCurrentWeeklyParticipation(
+      courseProgress.studyDayCompletions,
+      now,
+    ),
   };
 }
 
@@ -160,7 +173,7 @@ export function useDashboardStats(isDashboardActive: boolean) {
   return {
     dashboardCourse,
     totalMuscleCount: dashboardCourse?.muscleProfileIds.length ?? 0,
-    totalStudyDays: COURSE_DAYS,
+    totalStudyDays: EXPECTED_COURSE_STUDY_SESSIONS,
     ...stats,
     refreshDashboardStats,
   };

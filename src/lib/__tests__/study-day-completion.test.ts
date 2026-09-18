@@ -47,10 +47,15 @@ describe("study day completion", () => {
       },
     });
 
-    markStudyDayCompleted("cervical");
+    const completedAt = new Date("2026-09-17T21:14:03.512Z");
+    markStudyDayCompleted("cervical", undefined, completedAt);
 
-    expect(getCourseProgress("cervical").completedStudyDays).toEqual([1]);
-    expect(isCurrentStudyDayCompleted(getCourseProgress("cervical"))).toBe(true);
+    const progress = getCourseProgress("cervical");
+    expect(progress.completedStudyDays).toEqual([1]);
+    expect(progress.studyDayCompletions).toEqual([
+      { studyDay: 1, completedAt: "2026-09-17T21:14:03.512Z" },
+    ]);
+    expect(isCurrentStudyDayCompleted(progress)).toBe(true);
   });
 
   it("does not generate another planned queue after the day is complete", () => {
@@ -161,6 +166,7 @@ describe("study day completion", () => {
 
     expect(advancedOnce.currentStudyDay).toBe(2);
     expect(advancedTwice.currentStudyDay).toBe(2);
+    expect(advancedOnce.studyDayCompletions).toEqual([]);
     expect(isCurrentStudyDayCompleted(advancedOnce)).toBe(false);
     expect(
       buildStudyDayScheduledQueue(cervicalCourse, advancedOnce, emptyStore()).length,
@@ -194,10 +200,13 @@ describe("study day completion", () => {
       },
     });
 
-    markStudyDayCompleted("cervical");
+    markStudyDayCompleted("cervical", undefined, new Date("2026-09-17T21:14:03.512Z"));
 
     const raw = window.localStorage.getItem(COURSE_PROGRESS_STORAGE_KEY);
     expect(raw).toContain("completedStudyDays");
     expect(JSON.parse(raw!).courses.cervical.completedStudyDays).toEqual([1]);
+    expect(JSON.parse(raw!).courses.cervical.studyDayCompletions).toEqual([
+      { studyDay: 1, completedAt: "2026-09-17T21:14:03.512Z" },
+    ]);
   });
 });

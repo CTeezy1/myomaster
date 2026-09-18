@@ -197,8 +197,8 @@ function persistQueuedCardGrade(
 
 export default function Home() {
   const router = useRouter();
-  const { markViewed, resetProgress, syncViewedFromStorage } = useMuscleBriefProgress();
-  const { progressState, resetLearningProgressRemote } = useLearnerProgress();
+  const { markViewed } = useMuscleBriefProgress();
+  const { progressState } = useLearnerProgress();
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
   const [currentMuscleIndex, setCurrentMuscleIndex] = useState(0);
@@ -238,6 +238,7 @@ export default function Home() {
     hasResumableStudySession,
     isStudyDayComplete,
     canAdvanceStudyDay,
+    weeklyParticipation,
     refreshDashboardStats,
   } = useDashboardStats(screen === "dashboard");
   const plannedStaticQueueRef = useRef<QueuedCard[]>([]);
@@ -848,25 +849,6 @@ export default function Home() {
     notifyProgressChanged({ immediate: true });
   }
 
-  async function handleResetLearningProgress() {
-    const success = await resetLearningProgressRemote();
-
-    if (!success) {
-      return;
-    }
-
-    resetProgress({ clearStorage: false });
-    syncViewedFromStorage();
-    resetReviewSession();
-    resetStudyDaySession();
-    resetCourse();
-    hasRestoredSessionRef.current = false;
-    plannedStaticQueueRef.current = [];
-    setStudyCards(cards.map((card) => ({ ...card })));
-    setScreen("dashboard");
-    refreshDashboardStats();
-  }
-
   function handleReturnToDashboardFromError() {
     if (studyDaySession && activeCourse) {
       persistActiveStudySessionState();
@@ -894,7 +876,7 @@ export default function Home() {
           onAdvanceStudyDay={handleAdvanceStudyDay}
           onOpenMuscleLibrary={() => router.push("/library")}
           onOpenMemoryCode={() => router.push("/memory-code")}
-          onResetLearningProgress={handleResetLearningProgress}
+          weeklyParticipation={weeklyParticipation}
         />
       )}
 
@@ -910,6 +892,7 @@ export default function Home() {
               ? handleReturnToPractice
               : handleStartPractice
           }
+          onReturnToDashboard={handleReturnToDashboard}
         />
       ) : null}
 
@@ -927,6 +910,7 @@ export default function Home() {
           onGrade={handleGrade}
           onReviewBrief={handleReviewBrief}
           onContinue={handleContinueAfterFeedback}
+          onReturnToDashboard={handleReturnToDashboard}
         />
       )}
 
@@ -972,6 +956,7 @@ export default function Home() {
           onGrade={handleGrade}
           onReviewBrief={handleReviewBrief}
           onContinue={handleContinueAfterFeedback}
+          onReturnToDashboard={handleReturnToDashboard}
         />
       )}
 

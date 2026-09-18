@@ -17,6 +17,7 @@ import {
 import {
   createDefaultCourseProgress,
   getCourseProgress,
+  isCurrentStudyDayCompleted,
   writeCourseProgressStore,
 } from "@/src/lib/course-progress";
 import {
@@ -195,6 +196,7 @@ function simulateStartStudying() {
     return {
       kind: "resume" as const,
       course,
+      screen: persisted.screen,
       queue: persisted.session.queue.map((card) => ({ ...card })),
       plannedStaticQueue: persisted.plannedStaticQueue.map((card) => ({
         ...card,
@@ -395,6 +397,138 @@ describe("reset and resume safety", () => {
     expect(started.queue.some((card) => card.isPendingRetry)).toBe(true);
     expect(plannedIds[0]).toBe(firstMuscleIdForRegion("shoulder"));
     expect(started.queue.map((card) => card.muscleId)).not.toContain(plannedIds[0]);
+  });
+
+  it("leaves an active session for the dashboard without completing the study day", () => {
+    pinAndHydrate("upper-first-v1");
+
+    const cervicalId = firstMuscleIdForRegion("cervical");
+    const existingQueue: QueuedCard[] = [
+      {
+        muscleId: cervicalId,
+        cardKey: `${cervicalId}:action` as CardProgressKey,
+        category: "action",
+      },
+      {
+        muscleId: cervicalId,
+        cardKey: `${cervicalId}:innervation` as CardProgressKey,
+        category: "innervation",
+      },
+    ];
+    let session = createSameSessionRelearnState(existingQueue, {
+      enforceDailyCap: true,
+    });
+    session = applySameSessionGrade(session, existingQueue[0], "correct");
+
+    writeActiveStudySession(
+      createPersistedActiveStudySession({
+        courseId: DEFAULT_COURSE_ID,
+        studyDay: 1,
+        plannedStaticQueue: existingQueue,
+        session,
+        screen: "study-day",
+        currentMuscleIndex: 0,
+        cardFeedback: createInitialCardFeedbackState(),
+      }),
+    );
+    writeCourseProgressStore({
+      version: 1,
+      courses: {
+        [DEFAULT_COURSE_ID]: {
+          ...createDefaultCourseProgress(DEFAULT_COURSE_ID),
+          currentStudyDay: 1,
+          startedAt: "2026-08-01T12:00:00.000Z",
+        },
+      },
+    });
+
+    const storedAfterLeave = readActiveStudySession();
+    const courseProgressAfterLeave = getCourseProgress(DEFAULT_COURSE_ID);
+    const resumed = simulateStartStudying();
+
+    expect(storedAfterLeave).not.toBeNull();
+    expect(isCurrentStudyDayCompleted(courseProgressAfterLeave)).toBe(false);
+    expect(courseProgressAfterLeave.completedStudyDays).toEqual([]);
+    expect(courseProgressAfterLeave.studyDayCompletions).toEqual([]);
+    expect(
+      isResumableActiveStudySession(
+        storedAfterLeave,
+        DEFAULT_COURSE_ID,
+        courseProgressAfterLeave,
+      ),
+    ).toBe(true);
+    expect(resumed.kind).toBe("resume");
+    if (resumed.kind !== "resume" || !storedAfterLeave) {
+      return;
+    }
+
+    expect(resumed.queue).toEqual(storedAfterLeave.session.queue);
+    expect(resumed.plannedStaticQueue).toEqual(storedAfterLeave.plannedStaticQueue);
+    expect(resumed.queue.map((card) => card.muscleId)).toEqual([
+      cervicalId,
+      cervicalId,
+    ]);
+  });
+
+  it("leaves a Muscle Brief active session without completing the brief or study day", () => {
+    pinAndHydrate("upper-first-v1");
+
+    const cervicalId = firstMuscleIdForRegion("cervical");
+    const existingQueue: QueuedCard[] = [
+      {
+        muscleId: cervicalId,
+        cardKey: `${cervicalId}:action` as CardProgressKey,
+        category: "action",
+      },
+    ];
+    const session = createSameSessionRelearnState(existingQueue, {
+      enforceDailyCap: true,
+    });
+
+    writeActiveStudySession(
+      createPersistedActiveStudySession({
+        courseId: DEFAULT_COURSE_ID,
+        studyDay: 1,
+        plannedStaticQueue: existingQueue,
+        session,
+        screen: "brief",
+        currentMuscleIndex: 0,
+        cardFeedback: createInitialCardFeedbackState(),
+      }),
+    );
+    writeCourseProgressStore({
+      version: 1,
+      courses: {
+        [DEFAULT_COURSE_ID]: {
+          ...createDefaultCourseProgress(DEFAULT_COURSE_ID),
+          currentStudyDay: 1,
+          startedAt: "2026-08-01T12:00:00.000Z",
+        },
+      },
+    });
+
+    const storedAfterLeave = readActiveStudySession();
+    const courseProgressAfterLeave = getCourseProgress(DEFAULT_COURSE_ID);
+    const resumed = simulateStartStudying();
+
+    expect(storedAfterLeave).not.toBeNull();
+    expect(storedAfterLeave?.screen).toBe("brief");
+    expect(isCurrentStudyDayCompleted(courseProgressAfterLeave)).toBe(false);
+    expect(courseProgressAfterLeave.studyDayCompletions).toEqual([]);
+    expect(
+      isResumableActiveStudySession(
+        storedAfterLeave,
+        DEFAULT_COURSE_ID,
+        courseProgressAfterLeave,
+      ),
+    ).toBe(true);
+    expect(resumed.kind).toBe("resume");
+    if (resumed.kind !== "resume") {
+      return;
+    }
+
+    expect(resumed.screen).toBe("brief");
+    expect(resumed.queue).toEqual(storedAfterLeave?.session.queue);
   });
 });
 
@@ -625,5 +759,25 @@ describe("study-flow source wiring", () => {
     expect(dashboard).not.toContain("getCourseById(DEFAULT_COURSE_ID)");
     expect(page).not.toContain("profile.section");
     expect(dashboard).not.toContain("profile.section");
+    expect(page).not.toContain("onResetLearningProgress");
+    expect(page).toContain("onReturnToDashboard={handleReturnToDashboard}");
+    expect(page).toMatch(
+      /<MuscleBriefScreen[\s\S]*onReturnToDashboard=\{handleReturnToDashboard\}/,
+    );
+    expect(page).toContain('onOpenMuscleLibrary={() => router.push("/library")}');
+
+    const mixedReviewFinish = page.slice(
+      page.indexOf("function handleFinishMixedReview()"),
+      page.indexOf("function handleStartStudying()"),
+    );
+    const returnToDashboard = page.slice(
+      page.indexOf("function handleReturnToDashboard()"),
+      page.indexOf("function handleAdvanceStudyDay()"),
+    );
+
+    expect(mixedReviewFinish).toContain("function handleFinishMixedReview()");
+    expect(mixedReviewFinish).not.toContain("markStudyDayCompleted");
+    expect(returnToDashboard).toContain("function handleReturnToDashboard()");
+    expect(returnToDashboard).not.toContain("markStudyDayCompleted");
   });
 });

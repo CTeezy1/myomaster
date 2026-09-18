@@ -116,6 +116,7 @@ describe("muscle id migration", () => {
       "2026-01-01T12:00:00.000Z",
     );
     expect(migrated.introductionStudyDays.coracobrachialis).toBe(2);
+    expect(migrated.studyDayCompletions).toEqual([]);
     expect(migrateViewedMuscleBriefIds(["pectoral-minor", "caracobrachialis"])).toEqual([
       "pectoralis-minor",
       "coracobrachialis",
@@ -123,6 +124,21 @@ describe("muscle id migration", () => {
     expect(migrateCarriedOverRetryKeys(["pectoral-minor:action"])).toEqual([
       "pectoralis-minor:action",
     ]);
+  });
+
+  it("preserves study day completion events during muscle-id migration", () => {
+    const migrated = migrateCourseProgress({
+      ...createDefaultCourseProgress("shoulder"),
+      completedStudyDays: [1],
+      studyDayCompletions: [
+        { studyDay: 1, completedAt: "2026-09-17T21:14:03.512Z" },
+      ],
+    });
+
+    expect(migrated.studyDayCompletions).toEqual([
+      { studyDay: 1, completedAt: "2026-09-17T21:14:03.512Z" },
+    ]);
+    expect(migrated.completedStudyDays).toEqual([1]);
   });
 
   it("resolves corrected shoulder cards to canonical profile IDs", () => {

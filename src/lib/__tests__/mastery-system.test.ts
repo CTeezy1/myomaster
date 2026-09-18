@@ -558,6 +558,7 @@ describe("introduction policy", () => {
     const simulation = simulatePlannedMuscleIntroductions(totalCourseMuscles);
 
     expect(simulation.introducedCount).toBe(totalCourseMuscles);
+    expect(simulation.lastIntroductionDay).toBe(71);
     expect(simulation.lastIntroductionDay).toBeLessThanOrEqual(
       INTRODUCTION_PERIOD_DAYS,
     );
