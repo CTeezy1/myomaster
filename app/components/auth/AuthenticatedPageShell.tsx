@@ -21,10 +21,12 @@ import { createBrowserSupabaseClient } from "@/src/lib/supabase/browser";
 
 type AuthenticatedPageShellProps = {
   children: ReactNode;
+  showInstructorLink?: boolean;
 };
 
 export function AuthenticatedPageShell({
   children,
+  showInstructorLink = false,
 }: AuthenticatedPageShellProps) {
   const learnerState = useCurrentLearner();
 
@@ -70,7 +72,10 @@ export function AuthenticatedPageShell({
 
   return (
     <LearnerProgressProvider profile={learnerState.profile}>
-      <AuthenticatedProgressGate profile={learnerState.profile}>
+      <AuthenticatedProgressGate
+        profile={learnerState.profile}
+        showInstructorLink={showInstructorLink}
+      >
         {children}
       </AuthenticatedProgressGate>
     </LearnerProgressProvider>
@@ -80,9 +85,11 @@ export function AuthenticatedPageShell({
 function AuthenticatedProgressGate({
   profile,
   children,
+  showInstructorLink,
 }: {
   profile: { username: string; section: CourseSection };
   children: ReactNode;
+  showInstructorLink: boolean;
 }) {
   const {
     progressState,
@@ -167,7 +174,7 @@ function AuthenticatedProgressGate({
 
   if (progressState.status === "loading") {
     return (
-      <PageShell identity={identity}>
+      <PageShell identity={identity} showInstructorLink={showInstructorLink}>
         <Card variant="featured" className="py-10 text-center">
           <p
             aria-live="polite"
@@ -187,6 +194,7 @@ function AuthenticatedProgressGate({
         onLogout={handleLogoutClick}
         isLoggingOut={isLoggingOut}
         logoutError={logoutError}
+        showInstructorLink={showInstructorLink}
       >
         <Card variant="featured" className="space-y-4 py-8 text-center">
           <p
@@ -243,6 +251,7 @@ function AuthenticatedProgressGate({
         onLogout={handleLogoutClick}
         isLoggingOut={isLoggingOut}
         logoutError={logoutError}
+        showInstructorLink={showInstructorLink}
       >
         <Card variant="featured" className="space-y-4 py-8 text-center">
           <p
@@ -267,6 +276,7 @@ function AuthenticatedProgressGate({
         isLoggingOut={isLoggingOut}
         logoutError={logoutError}
         saveStatusLabel={saveStatusLabel}
+        showInstructorLink={showInstructorLink}
       >
         {children}
       </PageShell>

@@ -101,6 +101,21 @@ describe("AuthenticatedPageShell", () => {
     expect(await screen.findByText("Energetic Pencil")).toBeInTheDocument();
     expect(screen.getByText("Kinesiology 1")).toBeInTheDocument();
     expect(screen.getByText("Protected content")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Instructor Dashboard" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows an Instructor Dashboard link only when the server marks the account as instructor", async () => {
+    render(
+      <AuthenticatedPageShell showInstructorLink>
+        <p>Protected content</p>
+      </AuthenticatedPageShell>,
+    );
+
+    expect(
+      await screen.findByRole("link", { name: "Instructor Dashboard" }),
+    ).toHaveAttribute("href", "/instructor");
   });
 
   it("does not display internal email or auth user IDs", async () => {

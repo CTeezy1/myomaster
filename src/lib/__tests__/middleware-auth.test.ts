@@ -36,5 +36,20 @@ describe("middleware auth redirect rules", () => {
         isAuthenticated: true,
       }),
     ).toBeNull();
+    expect(
+      resolveAuthRedirect({
+        pathname: "/instructor",
+        isAuthenticated: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("redirects unauthenticated users from /instructor to /login", () => {
+    expect(
+      resolveAuthRedirect({
+        pathname: "/instructor",
+        isAuthenticated: false,
+      }),
+    ).toBe("/login");
   });
 });

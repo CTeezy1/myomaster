@@ -12,11 +12,14 @@ describe("auth routes", () => {
     expect(isPublicPagePath("/join")).toBe(true);
     expect(isPublicPagePath("/")).toBe(false);
     expect(isPublicPagePath("/library")).toBe(false);
+    expect(isPublicPagePath("/instructor")).toBe(false);
   });
 
   it("treats /api/auth/join as a public API route", () => {
     expect(isPublicApiPath("/api/auth/join")).toBe(true);
     expect(isPublicPath("/api/auth/join")).toBe(true);
+    expect(isPublicApiPath("/api/instructor/roster")).toBe(false);
+    expect(isPublicPath("/api/instructor/roster")).toBe(false);
   });
 
   it("redirects unauthenticated visitors from protected routes to /login", () => {
@@ -34,6 +37,9 @@ describe("auth routes", () => {
     ).toBe("/login");
     expect(
       resolveAuthRedirect({ pathname: "/memory-code", isAuthenticated: false }),
+    ).toBe("/login");
+    expect(
+      resolveAuthRedirect({ pathname: "/instructor", isAuthenticated: false }),
     ).toBe("/login");
   });
 
@@ -67,6 +73,9 @@ describe("auth routes", () => {
     ).toBeNull();
     expect(
       resolveAuthRedirect({ pathname: "/memory-code", isAuthenticated: true }),
+    ).toBeNull();
+    expect(
+      resolveAuthRedirect({ pathname: "/instructor", isAuthenticated: true }),
     ).toBeNull();
   });
 });

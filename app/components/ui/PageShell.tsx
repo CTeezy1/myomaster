@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Button } from "@/app/components/ui/Button";
 import type { CourseSection } from "@/src/lib/profile.types";
 
@@ -14,6 +15,7 @@ type PageShellProps = {
   isLoggingOut?: boolean;
   logoutError?: string | null;
   saveStatusLabel?: string | null;
+  showInstructorLink?: boolean;
 };
 
 export function PageShell({
@@ -23,6 +25,7 @@ export function PageShell({
   isLoggingOut = false,
   logoutError = null,
   saveStatusLabel = null,
+  showInstructorLink = false,
 }: PageShellProps) {
   return (
     <div className="min-h-full bg-background">
@@ -68,6 +71,14 @@ export function PageShell({
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1">
+                {showInstructorLink ? (
+                  <Link
+                    href="/instructor"
+                    className="text-xs font-medium text-brand-700 underline-offset-2 hover:underline"
+                  >
+                    Instructor Dashboard
+                  </Link>
+                ) : null}
                 {saveStatusLabel ? (
                   <p
                     aria-live="polite"
