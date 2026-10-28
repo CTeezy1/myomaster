@@ -200,6 +200,8 @@ export function migrateCarriedOverRetryKeys(
 }
 
 export function migrateCourseProgress(progress: CourseProgress): CourseProgress {
+  const deferredMuscleIds = migrateUniqueMuscleIds(progress.deferredMuscleIds ?? []);
+
   return {
     ...progress,
     introducedMuscleIds: migrateUniqueMuscleIds(progress.introducedMuscleIds),
@@ -208,6 +210,7 @@ export function migrateCourseProgress(progress: CourseProgress): CourseProgress 
     carriedOverRetryKeys: migrateCarriedOverRetryKeys(progress.carriedOverRetryKeys),
     completedStudyDays: progress.completedStudyDays ?? [],
     studyDayCompletions: progress.studyDayCompletions ?? [],
+    ...(deferredMuscleIds.length > 0 ? { deferredMuscleIds } : {}),
   };
 }
 

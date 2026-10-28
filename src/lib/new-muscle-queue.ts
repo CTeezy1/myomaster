@@ -3,6 +3,7 @@ import {
   CARD_CATEGORIES,
 } from "@/src/lib/card-progress-key";
 import type { Course } from "@/src/lib/course.types";
+import { selectNewMuscleIds } from "@/src/lib/deferred-muscles";
 import type { CourseProgress } from "@/src/lib/progress.types";
 import type { QueuedCard } from "@/src/lib/review-queue";
 
@@ -42,23 +43,5 @@ export function getNewMuscleIdsForStudyDay(
   courseProgress: CourseProgress,
   remainingNewAllowance: number,
 ): string[] {
-  if (remainingNewAllowance <= 0) {
-    return [];
-  }
-
-  const newMuscleIds: string[] = [];
-
-  for (const muscleId of course.muscleProfileIds) {
-    if (courseProgress.introducedMuscleIds.includes(muscleId)) {
-      continue;
-    }
-
-    newMuscleIds.push(muscleId);
-
-    if (newMuscleIds.length >= remainingNewAllowance) {
-      break;
-    }
-  }
-
-  return newMuscleIds;
+  return selectNewMuscleIds(course, courseProgress, remainingNewAllowance);
 }

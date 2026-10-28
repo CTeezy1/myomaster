@@ -126,6 +126,26 @@ describe("muscle id migration", () => {
     ]);
   });
 
+  it("migrates deferred muscle IDs without dropping the alignment audit", () => {
+    const migrated = migrateCourseProgress({
+      ...createDefaultCourseProgress("shoulder"),
+      deferredMuscleIds: ["pectoral-minor", "caracobrachialis"],
+      curriculumAlignmentAudit: {
+        originalStudyDay: 5,
+        adjustedStudyDay: 20,
+        adjustedAt: "2026-10-27T00:00:00.000Z",
+        reason: "test",
+        section: "Kinesiology 1",
+      },
+    });
+
+    expect(migrated.deferredMuscleIds).toEqual([
+      "pectoralis-minor",
+      "coracobrachialis",
+    ]);
+    expect(migrated.curriculumAlignmentAudit?.originalStudyDay).toBe(5);
+  });
+
   it("preserves study day completion events during muscle-id migration", () => {
     const migrated = migrateCourseProgress({
       ...createDefaultCourseProgress("shoulder"),

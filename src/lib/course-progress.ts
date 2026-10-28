@@ -1,3 +1,8 @@
+import {
+  parseCurriculumAlignmentAudit,
+  parseDeferredMuscleIds,
+  withoutIntroducedDeferredMuscles,
+} from "@/src/lib/deferred-muscles";
 import { COURSE_DAYS } from "@/src/lib/introduction-policy";
 import {
   DEFAULT_COURSE_ID,
@@ -245,6 +250,10 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
   ) as CardProgressKey[];
   const completedStudyDays = parseCompletedStudyDays(record.completedStudyDays);
   const studyDayCompletions = parseStudyDayCompletions(record.studyDayCompletions);
+  const deferredMuscleIds = parseDeferredMuscleIds(record.deferredMuscleIds);
+  const curriculumAlignmentAudit = parseCurriculumAlignmentAudit(
+    record.curriculumAlignmentAudit,
+  );
 
   const filteredIntroductionDates: Record<string, string> = {};
   const filteredIntroductionStudyDays: Record<string, number> = {};
@@ -271,6 +280,8 @@ function parseCourseProgress(value: unknown): CourseProgress | null {
     carriedOverRetryKeys,
     completedStudyDays,
     studyDayCompletions,
+    ...(deferredMuscleIds.length > 0 ? { deferredMuscleIds } : {}),
+    ...(curriculumAlignmentAudit ? { curriculumAlignmentAudit } : {}),
   };
 }
 
@@ -410,6 +421,10 @@ export function migrateLegacyCourseProgressIfNeeded(
 }
 
 function normalizeCourseProgress(progress: CourseProgress): CourseProgress {
+  const deferredMuscleIds = parseDeferredMuscleIds(progress.deferredMuscleIds);
+  const curriculumAlignmentAudit = parseCurriculumAlignmentAudit(
+    progress.curriculumAlignmentAudit,
+  );
   const normalized: CourseProgress = {
     ...progress,
     currentStudyDay: clampStudyDay(progress.currentStudyDay ?? 1),
@@ -417,6 +432,8 @@ function normalizeCourseProgress(progress: CourseProgress): CourseProgress {
     carriedOverRetryKeys: progress.carriedOverRetryKeys ?? [],
     completedStudyDays: progress.completedStudyDays ?? [],
     studyDayCompletions: progress.studyDayCompletions ?? [],
+    ...(deferredMuscleIds.length > 0 ? { deferredMuscleIds } : {}),
+    ...(curriculumAlignmentAudit ? { curriculumAlignmentAudit } : {}),
   };
 
   for (const muscleId of normalized.introducedMuscleIds) {
@@ -620,6 +637,10 @@ export function markMuscleIntroduced(
     return progress;
   }
 
+  const deferredMuscleIds = withoutIntroducedDeferredMuscles(
+    progress,
+    normalizedMuscleId,
+  );
   const updated: CourseProgress = {
     ...progress,
     introducedMuscleIds: [...progress.introducedMuscleIds, normalizedMuscleId],
@@ -631,7 +652,12 @@ export function markMuscleIntroduced(
       ...progress.introductionStudyDays,
       [normalizedMuscleId]: getCurrentStudyDay(progress),
     },
+    ...(deferredMuscleIds.length > 0 ? { deferredMuscleIds } : {}),
   };
+
+  if (deferredMuscleIds.length === 0) {
+    delete updated.deferredMuscleIds;
+  }
 
   writeCourseProgress(updated);
 

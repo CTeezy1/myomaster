@@ -117,10 +117,26 @@ export function findNextGuidedMuscleIndex(
     return null;
   }
 
+  const deferred = new Set(courseProgress.deferredMuscleIds ?? []);
+
   for (let index = 0; index < course.muscleProfileIds.length; index += 1) {
     const muscleId = course.muscleProfileIds[index];
 
-    if (!courseProgress.introducedMuscleIds.includes(muscleId)) {
+    if (
+      !courseProgress.introducedMuscleIds.includes(muscleId) &&
+      !deferred.has(muscleId)
+    ) {
+      return { index, isNew: true };
+    }
+  }
+
+  for (let index = 0; index < course.muscleProfileIds.length; index += 1) {
+    const muscleId = course.muscleProfileIds[index];
+
+    if (
+      !courseProgress.introducedMuscleIds.includes(muscleId) &&
+      deferred.has(muscleId)
+    ) {
       return { index, isNew: true };
     }
   }

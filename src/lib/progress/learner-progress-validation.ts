@@ -42,7 +42,15 @@ function isCourseProgress(value: unknown): value is CourseProgress {
     Array.isArray(value.recentGrades) &&
     isStringArray(value.carriedOverRetryKeys) &&
     Array.isArray(value.completedStudyDays) &&
-    (value.studyDayCompletions === undefined || Array.isArray(value.studyDayCompletions))
+    (value.studyDayCompletions === undefined || Array.isArray(value.studyDayCompletions)) &&
+    (value.deferredMuscleIds === undefined || isStringArray(value.deferredMuscleIds)) &&
+    (value.curriculumAlignmentAudit === undefined ||
+      (isObject(value.curriculumAlignmentAudit) &&
+        typeof value.curriculumAlignmentAudit.originalStudyDay === "number" &&
+        typeof value.curriculumAlignmentAudit.adjustedStudyDay === "number" &&
+        typeof value.curriculumAlignmentAudit.adjustedAt === "string" &&
+        typeof value.curriculumAlignmentAudit.reason === "string" &&
+        typeof value.curriculumAlignmentAudit.section === "string"))
   );
 }
 

@@ -102,6 +102,52 @@ describe("parsePersistedLearnerProgress", () => {
     );
   });
 
+  it("accepts optional deferredMuscleIds and curriculumAlignmentAudit", () => {
+    const parsed = parsePersistedLearnerProgress({
+      schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,
+      savedAt: "2026-10-27T00:00:00.000Z",
+      state: {
+        courseProgress: {
+          version: 1,
+          courses: {
+            cervical: {
+              version: 1,
+              courseId: "cervical",
+              startedAt: "2026-10-01T00:00:00.000Z",
+              currentStudyDay: 20,
+              introducedMuscleIds: ["longus-colli"],
+              introductionDates: {},
+              introductionStudyDays: { "longus-colli": 1 },
+              recentGrades: [],
+              carriedOverRetryKeys: [],
+              completedStudyDays: [1],
+              deferredMuscleIds: ["deltoid"],
+              curriculumAlignmentAudit: {
+                originalStudyDay: 5,
+                adjustedStudyDay: 20,
+                adjustedAt: "2026-10-27T00:00:00.000Z",
+                reason: "test",
+                section: "Kinesiology 1",
+              },
+            },
+          },
+        },
+        masteryProgress: { version: 1, cards: {} },
+        activeStudySession: null,
+        muscleBriefViewedIds: [],
+      },
+    });
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.state.courseProgress.courses.cervical?.deferredMuscleIds).toEqual([
+      "deltoid",
+    ]);
+    expect(
+      parsed?.state.courseProgress.courses.cervical?.curriculumAlignmentAudit
+        ?.originalStudyDay,
+    ).toBe(5);
+  });
+
   it("accepts studyDayCompletions when present", () => {
     const parsed = parsePersistedLearnerProgress({
       schemaVersion: LEARNER_PROGRESS_SCHEMA_VERSION,

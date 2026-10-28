@@ -41,6 +41,14 @@ export type StudyDayCompletion = {
   completedAt: string;
 };
 
+export type CurriculumAlignmentAudit = {
+  originalStudyDay: number;
+  adjustedStudyDay: number;
+  adjustedAt: string;
+  reason: string;
+  section: string;
+};
+
 export interface CourseProgress {
   version: 1;
   courseId: string;
@@ -53,6 +61,8 @@ export interface CourseProgress {
   carriedOverRetryKeys: CardProgressKey[];
   completedStudyDays: number[];
   studyDayCompletions?: StudyDayCompletion[];
+  deferredMuscleIds?: string[];
+  curriculumAlignmentAudit?: CurriculumAlignmentAudit;
 }
 
 export interface CourseProgressStore {
