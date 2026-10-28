@@ -47,6 +47,7 @@ export type CurriculumAlignmentAudit = {
   adjustedAt: string;
   reason: string;
   section: string;
+  firstSessionNewMuscleCap?: number;
 };
 
 export interface CourseProgress {

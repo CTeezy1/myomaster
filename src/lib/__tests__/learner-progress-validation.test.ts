@@ -128,6 +128,7 @@ describe("parsePersistedLearnerProgress", () => {
                 adjustedAt: "2026-10-27T00:00:00.000Z",
                 reason: "test",
                 section: "Kinesiology 1",
+                firstSessionNewMuscleCap: 3,
               },
             },
           },
@@ -146,6 +147,10 @@ describe("parsePersistedLearnerProgress", () => {
       parsed?.state.courseProgress.courses.cervical?.curriculumAlignmentAudit
         ?.originalStudyDay,
     ).toBe(5);
+    expect(
+      parsed?.state.courseProgress.courses.cervical?.curriculumAlignmentAudit
+        ?.firstSessionNewMuscleCap,
+    ).toBe(3);
   });
 
   it("accepts studyDayCompletions when present", () => {

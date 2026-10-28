@@ -55,13 +55,23 @@ export function parseCurriculumAlignmentAudit(
     return undefined;
   }
 
-  return {
+  const audit: CurriculumAlignmentAudit = {
     originalStudyDay: record.originalStudyDay,
     adjustedStudyDay: record.adjustedStudyDay,
     adjustedAt: record.adjustedAt,
     reason: record.reason,
     section: record.section,
   };
+
+  if (
+    typeof record.firstSessionNewMuscleCap === "number" &&
+    Number.isInteger(record.firstSessionNewMuscleCap) &&
+    record.firstSessionNewMuscleCap >= 1
+  ) {
+    audit.firstSessionNewMuscleCap = record.firstSessionNewMuscleCap;
+  }
+
+  return audit;
 }
 
 export function getDeferredMuscleIds(progress: CourseProgress): string[] {

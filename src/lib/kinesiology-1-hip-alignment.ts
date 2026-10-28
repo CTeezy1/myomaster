@@ -18,6 +18,7 @@ export const KINESIOLOGY_1_HIP_START_DAY = 20;
 export const KINESIOLOGY_1_HIP_START_MUSCLE_ID = "gluteus-maximus";
 export const KINESIOLOGY_1_HIP_ALIGNMENT_REASON =
   "Align Kinesiology 1 introductions to the hip section for current class content. This is an administrative curriculum adjustment, not a completed study day.";
+export const KINESIOLOGY_1_FIRST_SESSION_NEW_MUSCLE_CAP = 3;
 
 const HIP_MUSCLE_IDS = new Set(
   getMuscleProfilesForRegionId("hip").map((profile) => profile.id),
@@ -132,6 +133,8 @@ export function planKinesiology1HipAlignment(
                 adjustedAt: now.toISOString(),
                 reason: KINESIOLOGY_1_HIP_ALIGNMENT_REASON,
                 section: KINESIOLOGY_1_SECTION,
+                firstSessionNewMuscleCap:
+                  KINESIOLOGY_1_FIRST_SESSION_NEW_MUSCLE_CAP,
               },
             },
           },

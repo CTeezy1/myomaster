@@ -44,8 +44,43 @@ export function getBaseDailyNewMuscleAllowance(
     courseProgress,
     courseDay,
   );
+  const remaining = Math.max(0, dailyTarget - introducedToday);
+  const alignedRemaining =
+    getFirstAlignedSessionRemainingNewMuscles(courseProgress);
 
-  return Math.max(0, dailyTarget - introducedToday);
+  if (alignedRemaining === null) {
+    return remaining;
+  }
+
+  return Math.min(remaining, alignedRemaining);
+}
+
+export function getFirstAlignedSessionRemainingNewMuscles(
+  progress: CourseProgress,
+): number | null {
+  const audit = progress.curriculumAlignmentAudit;
+  const cap = audit?.firstSessionNewMuscleCap;
+
+  if (
+    !audit ||
+    typeof cap !== "number" ||
+    !Number.isInteger(cap) ||
+    cap < 1 ||
+    getCurrentStudyDay(progress) !== audit.adjustedStudyDay
+  ) {
+    return null;
+  }
+
+  const used = progress.introducedMuscleIds.filter((muscleId) => {
+    if (progress.introductionStudyDays[muscleId] !== audit.adjustedStudyDay) {
+      return false;
+    }
+
+    const introducedAt = progress.introductionDates[muscleId];
+    return !introducedAt || introducedAt >= audit.adjustedAt;
+  }).length;
+
+  return Math.max(0, cap - used);
 }
 
 export function getGuidedDailyNewMuscleAllowance(

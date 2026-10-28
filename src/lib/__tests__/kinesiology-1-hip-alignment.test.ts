@@ -10,8 +10,12 @@ import {
 } from "@/src/lib/course-progress";
 import { getStudyCourseForCurriculum } from "@/src/lib/curriculum";
 import { getDueReviewPromptCount } from "@/src/lib/dashboard-progress";
+import { planDailyWorkload } from "@/src/lib/daily-workload-planning";
+import { isResumableActiveStudySession } from "@/src/lib/active-study-session";
+import { getBaseDailyNewMuscleAllowance } from "@/src/lib/guided-scheduling";
 import {
   countMasteryAttempts,
+  KINESIOLOGY_1_FIRST_SESSION_NEW_MUSCLE_CAP,
   KINESIOLOGY_1_HIP_ALIGNMENT_REASON,
   KINESIOLOGY_1_HIP_START_DAY,
   KINESIOLOGY_1_SECTION,
@@ -146,6 +150,7 @@ describe("Kinesiology 1 hip alignment planner", () => {
       adjustedStudyDay: 20,
       section: KINESIOLOGY_1_SECTION,
       reason: KINESIOLOGY_1_HIP_ALIGNMENT_REASON,
+      firstSessionNewMuscleCap: KINESIOLOGY_1_FIRST_SESSION_NEW_MUSCLE_CAP,
     });
     expect(getNewMuscleIdsForStudyDay(course, updated, 1)).toEqual([
       "gluteus-maximus",
@@ -258,6 +263,14 @@ describe("Kinesiology 1 hip alignment planner", () => {
         [DEFAULT_COURSE_ID]: {
           ...createDefaultCourseProgress(DEFAULT_COURSE_ID),
           deferredMuscleIds: ["deltoid", "lumbricals"],
+          curriculumAlignmentAudit: {
+            originalStudyDay: 5,
+            adjustedStudyDay: 20,
+            adjustedAt: "2026-10-27T12:00:00.000Z",
+            reason: KINESIOLOGY_1_HIP_ALIGNMENT_REASON,
+            section: KINESIOLOGY_1_SECTION,
+            firstSessionNewMuscleCap: 3,
+          },
         },
       },
     });
@@ -266,6 +279,10 @@ describe("Kinesiology 1 hip alignment planner", () => {
       "deltoid",
       "lumbricals",
     ]);
+    expect(
+      getCourseProgress(DEFAULT_COURSE_ID).curriculumAlignmentAudit
+        ?.firstSessionNewMuscleCap,
+    ).toBe(3);
   });
 
   it("does not treat the alignment audit as a study-day completion", () => {
@@ -305,7 +322,14 @@ describe("Kinesiology 1 hip alignment planner", () => {
 
     expect(predicted?.studyDay).toBe(20);
     expect(predicted?.overdueBlocksNewMuscles).toBe(false);
-    expect(predicted?.newMuscleIds[0]).toBe("gluteus-maximus");
+    expect(predicted?.newMuscleIds).toEqual([
+      "gluteus-maximus",
+      "gluteus-medius",
+      "gluteus-minimus",
+    ]);
+    expect(predicted?.newMuscleAllowance).toBe(
+      KINESIOLOGY_1_FIRST_SESSION_NEW_MUSCLE_CAP,
+    );
   });
 
   it("removes a deferred muscle once it is actually introduced", () => {
@@ -373,6 +397,152 @@ describe("Kinesiology 1 hip alignment planner", () => {
       action: "skip",
       reason: "student-activity-after-update",
     });
+  });
+});
+
+function uniqueNewMuscleIds(queue: { muscleId: string }[]): string[] {
+  return [...new Set(queue.map((card) => card.muscleId))];
+}
+
+function introduceAfterAlignment(
+  progress: CourseProgress,
+  muscleIds: string[],
+  introducedAt: string,
+): CourseProgress {
+  const introducedMuscleIds = [...progress.introducedMuscleIds];
+  const introductionStudyDays = { ...progress.introductionStudyDays };
+  const introductionDates = { ...progress.introductionDates };
+
+  for (const muscleId of muscleIds) {
+    if (!introducedMuscleIds.includes(muscleId)) {
+      introducedMuscleIds.push(muscleId);
+    }
+    introductionStudyDays[muscleId] = progress.currentStudyDay;
+    introductionDates[muscleId] = introducedAt;
+  }
+
+  return {
+    ...progress,
+    introducedMuscleIds,
+    introductionStudyDays,
+    introductionDates,
+  };
+}
+
+describe("first post-alignment new-muscle cap", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    { label: "Day 1", day: 1, introducedCount: 3 },
+    { label: "Day 5", day: 5, introducedCount: 11 },
+    { label: "Day 19", day: 19, introducedCount: 38 },
+    { label: "Day 25", day: 25, introducedCount: 36 },
+  ])(
+    "caps the first $label session at 3 new hip muscles, including resume and same-day restart",
+    ({ day, introducedCount }) => {
+      const plan = planKinesiology1HipAlignment(
+        envelope(progressAtDay(day, introducedCount)),
+        new Date("2026-10-27T12:00:00.000Z"),
+      );
+      const aligned = plan.progress.state.courseProgress.courses[DEFAULT_COURSE_ID]!;
+      const emptyMastery: MasteryProgressStore = { version: 1, cards: {} };
+      const predicted = predictKinesiology1NextSession(plan.progress);
+      const firstSession = planDailyWorkload(course, aligned, emptyMastery, () => 0);
+      const firstNewIds = uniqueNewMuscleIds(
+        firstSession.queue.filter((card) => !card.isPractice),
+      ).filter((muscleId) => !aligned.introducedMuscleIds.includes(muscleId));
+
+      expect(plan.action).toBe("adjust");
+      expect(aligned.curriculumAlignmentAudit?.firstSessionNewMuscleCap).toBe(3);
+      expect(predicted?.newMuscleIds).toHaveLength(
+        Math.min(3, predicted?.newMuscleAllowance ?? 0),
+      );
+      expect(predicted?.newMuscleIds.length).toBeLessThanOrEqual(3);
+      expect(predicted?.newMuscleIds[0]).toBe("gluteus-maximus");
+      expect(firstNewIds).toEqual(predicted?.newMuscleIds);
+      expect(firstSession.newMuscleAllowance).toBeLessThanOrEqual(3);
+
+      const interrupted = createPersistedActiveStudySession({
+        courseId: DEFAULT_COURSE_ID,
+        studyDay: aligned.currentStudyDay,
+        plannedStaticQueue: firstSession.queue,
+        session: createSameSessionRelearnState(firstSession.queue),
+        screen: "study-day",
+        currentMuscleIndex: 0,
+        cardFeedback: createInitialCardFeedbackState(),
+      });
+      const afterOne = introduceAfterAlignment(
+        aligned,
+        ["gluteus-maximus"],
+        "2026-10-27T13:00:00.000Z",
+      );
+
+      expect(
+        isResumableActiveStudySession(interrupted, DEFAULT_COURSE_ID, afterOne),
+      ).toBe(true);
+      expect(uniqueNewMuscleIds(interrupted.plannedStaticQueue)).toEqual(
+        uniqueNewMuscleIds(firstSession.queue),
+      );
+      expect(
+        getBaseDailyNewMuscleAllowance(afterOne, course.muscleProfileIds, emptyMastery),
+      ).toBe(Math.max(0, (predicted?.newMuscleAllowance ?? 3) - 1));
+
+      const afterCap = introduceAfterAlignment(
+        aligned,
+        predicted?.newMuscleIds ?? [],
+        "2026-10-27T14:00:00.000Z",
+      );
+      const restarted = planDailyWorkload(course, afterCap, emptyMastery, () => 0);
+
+      expect(
+        getBaseDailyNewMuscleAllowance(afterCap, course.muscleProfileIds, emptyMastery),
+      ).toBe(0);
+      expect(
+        uniqueNewMuscleIds(restarted.queue).filter(
+          (muscleId) => !afterCap.introducedMuscleIds.includes(muscleId),
+        ),
+      ).toEqual([]);
+
+      const nextDay = {
+        ...afterCap,
+        currentStudyDay: afterCap.currentStudyDay + 1,
+      };
+      const nextDayAllowance = getBaseDailyNewMuscleAllowance(
+        nextDay,
+        course.muscleProfileIds,
+        emptyMastery,
+      );
+
+      expect(nextDay.curriculumAlignmentAudit?.firstSessionNewMuscleCap).toBe(3);
+      expect(nextDayAllowance).toBeGreaterThan(0);
+    },
+  );
+
+  it("does not cap students who already reached hip without an alignment audit", () => {
+    const current = {
+      ...progressAtDay(20, 39),
+      introducedMuscleIds: [
+        ...course.muscleProfileIds.slice(0, 38),
+        "gluteus-maximus",
+      ],
+      introductionStudyDays: {
+        "gluteus-maximus": 20,
+      },
+    };
+    const source = envelope(current);
+    const plan = planKinesiology1HipAlignment(source);
+
+    expect(plan.action).toBe("unchanged");
+    expect(current.curriculumAlignmentAudit).toBeUndefined();
+    expect(
+      getBaseDailyNewMuscleAllowance(
+        current,
+        course.muscleProfileIds,
+        { version: 1, cards: {} },
+      ),
+    ).not.toBe(0);
   });
 });
 

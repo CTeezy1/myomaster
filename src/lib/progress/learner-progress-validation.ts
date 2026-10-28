@@ -50,7 +50,10 @@ function isCourseProgress(value: unknown): value is CourseProgress {
         typeof value.curriculumAlignmentAudit.adjustedStudyDay === "number" &&
         typeof value.curriculumAlignmentAudit.adjustedAt === "string" &&
         typeof value.curriculumAlignmentAudit.reason === "string" &&
-        typeof value.curriculumAlignmentAudit.section === "string"))
+        typeof value.curriculumAlignmentAudit.section === "string" &&
+        (value.curriculumAlignmentAudit.firstSessionNewMuscleCap === undefined ||
+          typeof value.curriculumAlignmentAudit.firstSessionNewMuscleCap ===
+            "number")))
   );
 }
 
